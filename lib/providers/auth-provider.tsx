@@ -14,6 +14,7 @@ interface AuthContextType {
   error: string | null;
   loading: boolean;
   isLoggedIn: boolean;
+  initialized: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [initialized, setInitialized] = useState<boolean>(false);
   const { loading, error, withAsync, setError } = useAsyncHandler();
 
   const isLoggedIn = !!user;
@@ -35,11 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      setInitialized(true);
 
       const {
         data: { subscription: authSubscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user ?? null);
+        setInitialized(true);
       });
 
       subscription = authSubscription;
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = () =>
     withAsync(async () => {
       await supabase.auth.signOut();
+      setInitialized(false);
       setUser(null);
     });
 
@@ -74,7 +79,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signOut, isLoggedIn, refetch, signIn, error }}
+      value={{
+        user,
+        loading,
+        signOut,
+        isLoggedIn,
+        refetch,
+        signIn,
+        error,
+        initialized,
+      }}
     >
       {children}
     </AuthContext.Provider>

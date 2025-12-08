@@ -1,8 +1,11 @@
+import { supabase } from "@/lib/supabase/supabase";
+import * as ImagePicker from "expo-image-picker";
 import { Link } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   ScrollView,
   Text,
   TextInput,
@@ -21,11 +24,12 @@ export default function SignUpPage() {
   const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const [preferences, setPreferences] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+    if (step < 4) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -40,7 +44,37 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
-      // Sign up logic here
+      let uploadedAvatarUrl = avatarUrl;
+
+      // Upload image to Supabase storage if user selected one
+      if (selectedImage) {
+        const fileExt = selectedImage.uri.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Convert image to blob for upload
+        const response = await fetch(selectedImage.uri);
+        const blob = await response.blob();
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("avatars") // Make sure this bucket exists in Supabase
+          .upload(filePath, blob, {
+            contentType: selectedImage.type || "image/jpeg",
+          });
+
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+
+        uploadedAvatarUrl = publicUrlData.publicUrl;
+      }
+
+      // Sign up logic here with uploaded avatar URL
       console.log({
         fullName,
         username,
@@ -48,13 +82,70 @@ export default function SignUpPage() {
         password,
         gender,
         birthdate,
-        avatarUrl,
+        avatarUrl: uploadedAvatarUrl,
         preferences,
       });
+
+      // TODO: Call your sign up function with uploadedAvatarUrl
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = () => {
+    console.log("Google sign up clicked");
+  };
+
+  const pickImage = async () => {
+    // Request permission
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "We need camera roll permissions to upload a photo."
+      );
+      return;
+    }
+
+    // Launch image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+      setAvatarUrl(""); // Clear URL input if user picks an image
+    }
+  };
+
+  const takePhoto = async () => {
+    // Request permission
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "We need camera permissions to take a photo."
+      );
+      return;
+    }
+
+    // Launch camera
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+      setAvatarUrl(""); // Clear URL input if user takes a photo
     }
   };
 
@@ -101,8 +192,8 @@ export default function SignUpPage() {
                   s === step
                     ? "w-8 bg-pink-500"
                     : s < step
-                      ? "w-2 bg-pink-300"
-                      : "w-2 bg-gray-200"
+                    ? "w-2 bg-pink-300"
+                    : "w-2 bg-gray-200"
                 }`}
               />
             ))}
@@ -116,15 +207,6 @@ export default function SignUpPage() {
               <Text className="text-base text-center text-gray-600 font-medium mb-6">
                 Basic Information
               </Text>
-
-              {/* Divider */}
-              <View className="flex-row items-center my-6">
-                <View className="flex-1 h-px bg-gray-200" />
-                <Text className="px-4 text-sm text-gray-500">
-                  or sign up with email
-                </Text>
-                <View className="flex-1 h-px bg-gray-200" />
-              </View>
 
               {/* Full Name Input */}
               <View className="mb-4">
@@ -248,20 +330,83 @@ export default function SignUpPage() {
                 />
               </View>
 
-              {/* Avatar URL Input */}
+              {/* Navigation Buttons */}
+              <View className="flex-row mb-4">
+                <TouchableOpacity
+                  onPress={handleBack}
+                  className="flex-1 bg-gray-100 rounded-full py-4 items-center justify-center mr-2"
+                  activeOpacity={0.8}
+                >
+                  <Text className="text-gray-700 font-bold text-base">
+                    Back
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleNext}
+                  className="flex-1 bg-pink-500 rounded-full py-4 items-center justify-center ml-2 shadow-md"
+                  activeOpacity={0.8}
+                >
+                  <Text className="text-white font-bold text-base">Next</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <Text className="text-base text-center text-gray-600 font-medium mb-6">
+                Profile Photo
+              </Text>
+
+              {/* Avatar Upload */}
               <View className="mb-6">
-                <Text className="text-sm text-gray-600 mb-2 px-1">
-                  Profile Picture URL (optional)
+                <Text className="text-sm text-gray-600 mb-3 px-1">
+                  Profile Picture
                 </Text>
-                <TextInput
-                  placeholder="https://example.com/photo.jpg"
-                  value={avatarUrl}
-                  onChangeText={setAvatarUrl}
-                  keyboardType="url"
-                  autoCapitalize="none"
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                />
+
+                {/* Image Preview */}
+                {selectedImage && (
+                  <View className="items-center mb-4">
+                    <Image
+                      source={{ uri: selectedImage.uri }}
+                      className="w-32 h-32 rounded-full"
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setSelectedImage(null)}
+                      className="mt-2"
+                      activeOpacity={0.7}
+                    >
+                      <Text className="text-sm text-pink-500 font-medium">
+                        Remove Photo
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Upload Buttons */}
+                {!selectedImage && (
+                  <View className="flex-row mb-4">
+                    <TouchableOpacity
+                      onPress={pickImage}
+                      className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center mr-2"
+                      activeOpacity={0.7}
+                    >
+                      <Text className="text-gray-700 font-medium text-sm">
+                        📷 Choose Photo
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={takePhoto}
+                      className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center ml-2"
+                      activeOpacity={0.7}
+                    >
+                      <Text className="text-gray-700 font-medium text-sm">
+                        📸 Take Photo
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
 
               {/* Navigation Buttons */}
@@ -286,7 +431,7 @@ export default function SignUpPage() {
             </>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <>
               <Text className="text-base text-center text-gray-600 font-medium mb-6">
                 Your Preferences
