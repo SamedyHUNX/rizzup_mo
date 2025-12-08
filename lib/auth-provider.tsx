@@ -13,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   isLoggedIn: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -60,6 +61,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  async function signIn(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // user is inside data
+      setUser(data.user);
+    } catch (error: any) {
+      console.error("Error signing in: ", error);
+    }
+  }
   async function signOut() {
     try {
       await supabase.auth.signOut();
@@ -84,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signOut, isLoggedIn, refetch }}
+      value={{ user, loading, signOut, isLoggedIn, refetch, signIn }}
     >
       {children}
     </AuthContext.Provider>

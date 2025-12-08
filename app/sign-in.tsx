@@ -1,26 +1,25 @@
-import { signIn } from "@/lib/auth";
-import { Redirect } from "expo-router";
+import { useAuth } from "@/lib/auth-provider";
 import React, { useState } from "react";
 import {
   Alert,
   Image,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { loading, signIn } = useAuth();
 
   const handleLogin = async () => {
     try {
-      await signIn({ email, password });
+      await signIn(email, password);
       Alert.alert("Signed in successfully!");
-      <Redirect href={"/"} />;
     } catch (error: any) {
       Alert.alert(error.message);
     }
@@ -29,6 +28,14 @@ export default function SignInPage() {
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-gray-500 text-base">Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white">
