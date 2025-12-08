@@ -6,14 +6,16 @@ import {
   useEffect,
   useState,
 } from "react";
-import { supabase } from "./supabase";
+import { supabase } from "../supabase/supabase";
+import { useAsyncHandler } from "../use-async-handler";
 
 interface AuthContextType {
   user: User | null;
+  error: string | null;
   loading: boolean;
-  signOut: () => Promise<void>;
   isLoggedIn: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -21,86 +23,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { loading, error, withAsync, setError } = useAsyncHandler();
 
   const isLoggedIn = !!user;
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
 
-    async function checkUser() {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        setUser(session?.user ?? null);
-
-        console.log(session?.user);
-
-        const {
-          data: { subscription: authSubscription },
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
-          setUser(session?.user ?? null);
-        });
-
-        subscription = authSubscription;
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    checkUser();
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  async function signIn(email: string, password: string) {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      // user is inside data
-      setUser(data.user);
-    } catch (error: any) {
-      console.error("Error signing in: ", error);
-    }
-  }
-  async function signOut() {
-    try {
-      await supabase.auth.signOut();
-    } catch (error: any) {
-      console.error("Error signing out: ", error);
-    }
-  }
-
-  async function refetch() {
-    setLoading(true);
-    try {
+    withAsync(async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
+
+      const {
+        data: { subscription: authSubscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+      });
+
+      subscription = authSubscription;
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  const signIn = (email: string, password: string) =>
+    withAsync(async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      setUser(data.user);
+    });
+
+  const signOut = () =>
+    withAsync(async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+    });
+
+  const refetch = () =>
+    withAsync(async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    });
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signOut, isLoggedIn, refetch, signIn }}
+      value={{ user, loading, signOut, isLoggedIn, refetch, signIn, error }}
     >
       {children}
     </AuthContext.Provider>

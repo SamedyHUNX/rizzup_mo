@@ -1,6 +1,8 @@
-import { useAuth } from "@/lib/auth-provider";
+import { useAuth } from "@/lib/providers/auth-provider";
+import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -14,16 +16,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { loading, signIn } = useAuth();
+  const { loading, signIn, error } = useAuth();
 
   const handleLogin = async () => {
     try {
       await signIn(email, password);
-      Alert.alert("Signed in successfully!");
     } catch (error: any) {
       Alert.alert(error.message);
     }
   };
+
+  if (error) {
+    Alert.alert("Error", error);
+  }
 
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
@@ -32,7 +37,7 @@ export default function SignInPage() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text className="text-gray-500 text-base">Loading...</Text>
+        <ActivityIndicator className="text-gray-500 text-base" />
       </SafeAreaView>
     );
   }
@@ -64,36 +69,9 @@ export default function SignInPage() {
 
         {/* Sign In Section */}
         <View className="px-8">
-          <Text className="text-base text-center text-gray-600 font-medium mb-6">
-            Login to RizzUp
+          <Text className="text-base text-center text-gray-600 font-medium mb-4">
+            Sign in to RizzUp
           </Text>
-
-          {/* Google Sign In Button */}
-          <TouchableOpacity
-            onPress={handleGoogleLogin}
-            className="bg-white border-2 border-gray-200 rounded-full py-4 flex-row items-center justify-center mb-6 shadow-sm"
-            activeOpacity={0.7}
-          >
-            <Image
-              source={{
-                uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png",
-              }}
-              className="w-6 h-6 mr-3"
-              resizeMode="contain"
-            />
-            <Text className="text-gray-700 font-semibold text-base">
-              Continue with Google
-            </Text>
-          </TouchableOpacity>
-
-          {/* Divider */}
-          <View className="flex-row items-center my-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="px-4 text-sm text-gray-500">
-              or sign in with email
-            </Text>
-            <View className="flex-1 h-px bg-gray-200" />
-          </View>
 
           {/* Email Input */}
           <View className="mb-4">
@@ -123,16 +101,16 @@ export default function SignInPage() {
           {/* Sign In Button */}
           <TouchableOpacity
             onPress={handleLogin}
-            className="bg-pink-500 rounded-full py-4 items-center justify-center mb-4 shadow-md"
+            className="bg-pink-500 rounded-full py-4 items-center justify-center mb-8 shadow-md"
             activeOpacity={0.8}
           >
             <Text className="text-white font-bold text-base">Sign In</Text>
           </TouchableOpacity>
 
           {/* Forgot Password */}
-          <TouchableOpacity className="items-center mb-4" activeOpacity={0.7}>
+          {/* <TouchableOpacity className="items-center mb-4" activeOpacity={0.7}>
             <Text className="text-sm text-gray-600">Forgot password?</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Sign Up Link */}
           <View className="flex-row items-center justify-center mb-8">
@@ -140,11 +118,32 @@ export default function SignInPage() {
               Don't have an account?{" "}
             </Text>
             <TouchableOpacity activeOpacity={0.7}>
-              <Text className="text-sm text-pink-500 font-semibold">
+              <Link
+                href={"/sign-up"}
+                className="text-sm text-pink-500 font-semibold"
+              >
                 Sign up
-              </Text>
+              </Link>
             </TouchableOpacity>
           </View>
+
+          {/* Google Sign In Button */}
+          <TouchableOpacity
+            onPress={handleGoogleLogin}
+            className="bg-white border-2 border-gray-200 rounded-full py-4 flex-row items-center justify-center mb-6 shadow-sm"
+            activeOpacity={0.7}
+          >
+            <Image
+              source={{
+                uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png",
+              }}
+              className="w-6 h-6 mr-3"
+              resizeMode="contain"
+            />
+            <Text className="text-gray-700 font-semibold text-base">
+              Continue with Google
+            </Text>
+          </TouchableOpacity>
 
           {/* Terms */}
           <Text className="text-xs text-center text-gray-500 px-4 mb-8">

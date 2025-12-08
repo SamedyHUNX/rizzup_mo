@@ -1,4 +1,4 @@
-import { AuthProvider } from "@/lib/auth-provider";
+import { AuthProvider } from "@/lib/providers/auth-provider";
 import { Stack } from "expo-router";
 import "./global.css";
 

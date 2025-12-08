@@ -1,4 +1,4 @@
-import { useAuth } from "@/lib/auth-provider";
+import { useAuth } from "@/lib/providers/auth-provider";
 import { Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
