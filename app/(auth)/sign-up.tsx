@@ -14,6 +14,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+type SelectedImage = {
+  uri: string;
+  type?: string;
+};
+
 export default function SignUpPage() {
   const [step, setStep] = useState(1);
   const [fullName, setFullName] = useState("");
@@ -24,7 +29,9 @@ export default function SignUpPage() {
   const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(
+    null
+  );
   const [preferences, setPreferences] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,7 +64,7 @@ export default function SignUpPage() {
         const blob = await response.blob();
 
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("avatars") // Make sure this bucket exists in Supabase
+          .from("avatars")
           .upload(filePath, blob, {
             contentType: selectedImage.type || "image/jpeg",
           });
@@ -149,6 +156,10 @@ export default function SignUpPage() {
     }
   };
 
+  if (gender === "male") {
+    Alert.alert("Error", "Only the admin can signup as male");
+  }
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -166,7 +177,7 @@ export default function SignUpPage() {
         {/* Header Image/Logo */}
         <View className="items-center pt-12 pb-8">
           <View className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center mb-6">
-            <Text className="text-6xl">💕</Text>
+            <Text className="text-6xl">😂</Text>
           </View>
         </View>
 
