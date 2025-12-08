@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
+
 const TabIcon = ({
   focused,
   icon,
@@ -13,7 +14,11 @@ const TabIcon = ({
 }) => {
   return (
     <View className="flex-1 mt-3 flex flex-col items-center">
-      <Icon name={icon} size={26} color={focused ? "#0061ff" : "#666876"} />
+      <Icon
+        name={icon}
+        size={26}
+        color={focused ? "#0061ff" : "#666876"}
+      />
 
       <Text
         className={`${
@@ -27,6 +32,7 @@ const TabIcon = ({
     </View>
   );
 };
+
 
 export default function TabsLayout() {
   return (
@@ -77,3 +83,4 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
