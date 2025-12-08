@@ -35,8 +35,120 @@ export default function SignUpPage() {
   const [preferences, setPreferences] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Validation errors
+  const [errors, setErrors] = useState({
+    fullName: "",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    gender: "",
+    birthdate: "",
+    preferences: "",
+  });
+
+  // Real-time validation functions
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return "Email is required";
+    if (!emailRegex.test(email)) return "Please enter a valid email";
+    return "";
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) return "Password is required";
+    if (password.length < 8) return "Password must be at least 8 characters";
+    if (!/(?=.*[a-z])/.test(password)) return "Must contain a lowercase letter";
+    if (!/(?=.*[A-Z])/.test(password))
+      return "Must contain an uppercase letter";
+    if (!/(?=.*\d)/.test(password)) return "Must contain a number";
+    return "";
+  };
+
+  const validateConfirmPassword = (
+    confirmPass: string,
+    originalPass: string
+  ) => {
+    if (!confirmPass) return "Please confirm your password";
+    if (confirmPass !== originalPass) return "Passwords don't match";
+    return "";
+  };
+
+  const validateFullName = (name: string) => {
+    if (!name.trim()) return "Full name is required";
+    if (name.trim().length < 2) return "Name must be at least 2 characters";
+    return "";
+  };
+
+  const validateUsername = (username: string) => {
+    if (!username.trim()) return "Username is required";
+    if (username.length < 3) return "Username must be at least 3 characters";
+    if (!/^[a-zA-Z0-9_]+$/.test(username))
+      return "Only letters, numbers, and underscores allowed";
+    return "";
+  };
+
+  const validateBirthdate = (date: string) => {
+    if (!date) return "Date of birth is required";
+    const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
+    if (!dateRegex.test(date)) return "Please use MM/DD/YYYY format";
+
+    const [month, day, year] = date.split("/").map(Number);
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    if (age < 18) return "You must be at least 18 years old";
+    if (year < 1900 || year > today.getFullYear())
+      return "Please enter a valid year";
+
+    return "";
+  };
+
+  // Check if current step is valid
+  const isStepValid = () => {
+    switch (step) {
+      case 1:
+        return (
+          fullName.trim() &&
+          username.trim() &&
+          email.trim() &&
+          password &&
+          confirmPassword &&
+          !errors.fullName &&
+          !errors.username &&
+          !errors.email &&
+          !errors.password &&
+          !errors.confirmPassword
+        );
+      case 2:
+        return gender && birthdate && !errors.birthdate;
+      case 3:
+        return true; // Profile photo is optional
+      case 4:
+        return preferences;
+      default:
+        return false;
+    }
+  };
+
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < 4 && isStepValid()) {
+      setStep(step + 1);
+    } else if (!isStepValid()) {
+      Alert.alert(
+        "Validation Error",
+        "Please fill in all required fields correctly"
+      );
+    }
   };
 
   const handleBack = () => {
@@ -44,8 +156,8 @@ export default function SignUpPage() {
   };
 
   const handleSignUp = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
+    if (!isStepValid()) {
+      Alert.alert("Validation Error", "Please complete all required fields");
       return;
     }
 
@@ -53,13 +165,11 @@ export default function SignUpPage() {
     try {
       let uploadedAvatarUrl = avatarUrl;
 
-      // Upload image to Supabase storage if user selected one
       if (selectedImage) {
         const fileExt = selectedImage.uri.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
 
-        // Convert image to blob for upload
         const response = await fetch(selectedImage.uri);
         const blob = await response.blob();
 
@@ -73,7 +183,6 @@ export default function SignUpPage() {
           throw new Error(`Upload failed: ${uploadError.message}`);
         }
 
-        // Get public URL
         const { data: publicUrlData } = supabase.storage
           .from("avatars")
           .getPublicUrl(filePath);
@@ -81,7 +190,6 @@ export default function SignUpPage() {
         uploadedAvatarUrl = publicUrlData.publicUrl;
       }
 
-      // Sign up logic here with uploaded avatar URL
       console.log({
         fullName,
         username,
@@ -93,7 +201,7 @@ export default function SignUpPage() {
         preferences,
       });
 
-      // TODO: Call your sign up function with uploadedAvatarUrl
+      // TODO: Call your sign up function
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -101,12 +209,7 @@ export default function SignUpPage() {
     }
   };
 
-  const handleGoogleSignUp = () => {
-    console.log("Google sign up clicked");
-  };
-
   const pickImage = async () => {
-    // Request permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
@@ -117,7 +220,6 @@ export default function SignUpPage() {
       return;
     }
 
-    // Launch image picker
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -127,12 +229,11 @@ export default function SignUpPage() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
-      setAvatarUrl(""); // Clear URL input if user picks an image
+      setAvatarUrl("");
     }
   };
 
   const takePhoto = async () => {
-    // Request permission
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== "granted") {
@@ -143,7 +244,6 @@ export default function SignUpPage() {
       return;
     }
 
-    // Launch camera
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
@@ -152,13 +252,9 @@ export default function SignUpPage() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
-      setAvatarUrl(""); // Clear URL input if user takes a photo
+      setAvatarUrl("");
     }
   };
-
-  if (gender === "male") {
-    Alert.alert("Error", "Only the admin can signup as male");
-  }
 
   if (loading) {
     return (
@@ -196,7 +292,7 @@ export default function SignUpPage() {
         {/* Progress Indicator */}
         <View className="px-8 mb-6">
           <View className="flex-row items-center justify-center">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <View
                 key={s}
                 className={`h-2 rounded-full mx-1 ${
@@ -224,11 +320,21 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="Full name"
                   value={fullName}
-                  onChangeText={setFullName}
+                  onChangeText={(text) => {
+                    setFullName(text);
+                    setErrors({ ...errors, fullName: validateFullName(text) });
+                  }}
                   autoCapitalize="words"
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.fullName ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
                 />
+                {errors.fullName ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.fullName}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Username Input */}
@@ -236,11 +342,21 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="Username"
                   value={username}
-                  onChangeText={setUsername}
+                  onChangeText={(text) => {
+                    setUsername(text);
+                    setErrors({ ...errors, username: validateUsername(text) });
+                  }}
                   autoCapitalize="none"
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.username ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
                 />
+                {errors.username ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.username}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Email Input */}
@@ -248,12 +364,22 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="Email address"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setErrors({ ...errors, email: validateEmail(text) });
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.email ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
                 />
+                {errors.email ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.email}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Password Input */}
@@ -261,11 +387,27 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="Password"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setErrors({
+                      ...errors,
+                      password: validatePassword(text),
+                      confirmPassword: confirmPassword
+                        ? validateConfirmPassword(confirmPassword, text)
+                        : "",
+                    });
+                  }}
                   secureTextEntry
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.password ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
                 />
+                {errors.password ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.password}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Confirm Password Input */}
@@ -273,20 +415,44 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="Confirm password"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    setErrors({
+                      ...errors,
+                      confirmPassword: validateConfirmPassword(text, password),
+                    });
+                  }}
                   secureTextEntry
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.confirmPassword
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
                 />
+                {errors.confirmPassword ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.confirmPassword}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Next Button */}
               <TouchableOpacity
                 onPress={handleNext}
-                className="bg-pink-500 rounded-full py-4 items-center justify-center mb-4 shadow-md"
+                className={`rounded-full py-4 items-center justify-center mb-4 shadow-md ${
+                  isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                }`}
                 activeOpacity={0.8}
+                disabled={!isStepValid()}
               >
-                <Text className="text-white font-bold text-base">Next</Text>
+                <Text
+                  className={`font-bold text-base ${
+                    isStepValid() ? "text-white" : "text-gray-500"
+                  }`}
+                >
+                  Next
+                </Text>
               </TouchableOpacity>
             </>
           )}
@@ -334,11 +500,25 @@ export default function SignUpPage() {
                 <TextInput
                   placeholder="MM/DD/YYYY"
                   value={birthdate}
-                  onChangeText={setBirthdate}
+                  onChangeText={(text) => {
+                    setBirthdate(text);
+                    setErrors({
+                      ...errors,
+                      birthdate: validateBirthdate(text),
+                    });
+                  }}
                   keyboardType="numbers-and-punctuation"
-                  className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-4 text-base text-gray-800"
+                  className={`bg-gray-50 border-2 ${
+                    errors.birthdate ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
                   placeholderTextColor="#9CA3AF"
+                  maxLength={10}
                 />
+                {errors.birthdate ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.birthdate}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Navigation Buttons */}
@@ -354,10 +534,19 @@ export default function SignUpPage() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleNext}
-                  className="flex-1 bg-pink-500 rounded-full py-4 items-center justify-center ml-2 shadow-md"
+                  className={`flex-1 rounded-full py-4 items-center justify-center ml-2 shadow-md ${
+                    isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                  }`}
                   activeOpacity={0.8}
+                  disabled={!isStepValid()}
                 >
-                  <Text className="text-white font-bold text-base">Next</Text>
+                  <Text
+                    className={`font-bold text-base ${
+                      isStepValid() ? "text-white" : "text-gray-500"
+                    }`}
+                  >
+                    Next
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -372,7 +561,7 @@ export default function SignUpPage() {
               {/* Avatar Upload */}
               <View className="mb-6">
                 <Text className="text-sm text-gray-600 mb-3 px-1">
-                  Profile Picture
+                  Profile Picture (Optional)
                 </Text>
 
                 {/* Image Preview */}
@@ -496,10 +685,17 @@ export default function SignUpPage() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSignUp}
-                  className="flex-1 bg-pink-500 rounded-full py-4 items-center justify-center ml-2 shadow-md"
+                  className={`flex-1 rounded-full py-4 items-center justify-center ml-2 shadow-md ${
+                    isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                  }`}
                   activeOpacity={0.8}
+                  disabled={!isStepValid()}
                 >
-                  <Text className="text-white font-bold text-base">
+                  <Text
+                    className={`font-bold text-base ${
+                      isStepValid() ? "text-white" : "text-gray-500"
+                    }`}
+                  >
                     Create Account
                   </Text>
                 </TouchableOpacity>
