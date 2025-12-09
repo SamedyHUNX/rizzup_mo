@@ -59,8 +59,8 @@ export default function SignUpPage() {
     if (!password) return "Password is required";
     if (password.length < 8) return "Password must be at least 8 characters";
     if (!/(?=.*[a-z])/.test(password)) return "Must contain a lowercase letter";
-    if (!/(?=.*[A-Z])/.test(password))
-      return "Must contain an uppercase letter";
+    // if (!/(?=.*[A-Z])/.test(password))
+    //   return "Must contain an uppercase letter";
     if (!/(?=.*\d)/.test(password)) return "Must contain a number";
     return "";
   };
@@ -271,28 +271,27 @@ export default function SignUpPage() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Image/Logo */}
-        <View className="items-center pt-12 pb-8">
-          <View className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center mb-6">
+        <View className="items-center">
+          <View className="w-32 h-28 pt-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center">
             <Text className="text-6xl">😂</Text>
           </View>
         </View>
 
         {/* Welcome Text */}
-        <View className="px-8 mb-8">
+        <View className="px-8 mb-4">
           <Text className="text-xs text-center uppercase tracking-widest text-gray-500 font-medium mb-3">
             Welcome to RizzUp
           </Text>
 
           <Text className="text-3xl font-bold text-gray-800 text-center leading-tight">
-            Create Your Account &{"\n"}
-            <Text className="text-pink-500">Find Your Match</Text>
+            Create Your Account
           </Text>
         </View>
 
         {/* Progress Indicator */}
         <View className="px-8 mb-6">
           <View className="flex-row items-center justify-center">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3].map((s) => (
               <View
                 key={s}
                 className={`h-2 rounded-full mx-1 ${
@@ -437,31 +436,34 @@ export default function SignUpPage() {
                 ) : null}
               </View>
 
-              {/* Next Button */}
-              <TouchableOpacity
-                onPress={handleNext}
-                className={`rounded-full py-4 items-center justify-center mb-4 shadow-md ${
-                  isStepValid() ? "bg-pink-500" : "bg-gray-300"
-                }`}
-                activeOpacity={0.8}
-                disabled={!isStepValid()}
-              >
-                <Text
-                  className={`font-bold text-base ${
-                    isStepValid() ? "text-white" : "text-gray-500"
-                  }`}
-                >
-                  Next
+              {/* Birthdate Input */}
+              <View className="mb-4">
+                <Text className="text-sm text-gray-600 mb-2 px-1">
+                  Date of Birth
                 </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <Text className="text-base text-center text-gray-600 font-medium mb-6">
-                Tell Us About Yourself
-              </Text>
+                <TextInput
+                  placeholder="MM/DD/YYYY"
+                  value={birthdate}
+                  onChangeText={(text) => {
+                    setBirthdate(text);
+                    setErrors({
+                      ...errors,
+                      birthdate: validateBirthdate(text),
+                    });
+                  }}
+                  keyboardType="numbers-and-punctuation"
+                  className={`bg-gray-50 border-2 ${
+                    errors.birthdate ? "border-red-400" : "border-gray-200"
+                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
+                  placeholderTextColor="#9CA3AF"
+                  maxLength={10}
+                />
+                {errors.birthdate ? (
+                  <Text className="text-red-500 text-xs mt-1 px-2">
+                    {errors.birthdate}
+                  </Text>
+                ) : null}
+              </View>
 
               {/* Gender Selection */}
               <View className="mb-4">
@@ -492,67 +494,27 @@ export default function SignUpPage() {
                 </View>
               </View>
 
-              {/* Birthdate Input */}
-              <View className="mb-4">
-                <Text className="text-sm text-gray-600 mb-2 px-1">
-                  Date of Birth
-                </Text>
-                <TextInput
-                  placeholder="MM/DD/YYYY"
-                  value={birthdate}
-                  onChangeText={(text) => {
-                    setBirthdate(text);
-                    setErrors({
-                      ...errors,
-                      birthdate: validateBirthdate(text),
-                    });
-                  }}
-                  keyboardType="numbers-and-punctuation"
-                  className={`bg-gray-50 border-2 ${
-                    errors.birthdate ? "border-red-400" : "border-gray-200"
-                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
-                  placeholderTextColor="#9CA3AF"
-                  maxLength={10}
-                />
-                {errors.birthdate ? (
-                  <Text className="text-red-500 text-xs mt-1 px-2">
-                    {errors.birthdate}
-                  </Text>
-                ) : null}
-              </View>
-
-              {/* Navigation Buttons */}
-              <View className="flex-row mb-4">
-                <TouchableOpacity
-                  onPress={handleBack}
-                  className="flex-1 bg-gray-100 rounded-full py-4 items-center justify-center mr-2"
-                  activeOpacity={0.8}
-                >
-                  <Text className="text-gray-700 font-bold text-base">
-                    Back
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleNext}
-                  className={`flex-1 rounded-full py-4 items-center justify-center ml-2 shadow-md ${
-                    isStepValid() ? "bg-pink-500" : "bg-gray-300"
+              {/* Next Button */}
+              <TouchableOpacity
+                onPress={handleNext}
+                className={`rounded-full py-4 items-center justify-center mb-4 shadow-md ${
+                  isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                }`}
+                activeOpacity={0.8}
+                disabled={!isStepValid()}
+              >
+                <Text
+                  className={`font-bold text-base ${
+                    isStepValid() ? "text-white" : "text-gray-500"
                   }`}
-                  activeOpacity={0.8}
-                  disabled={!isStepValid()}
                 >
-                  <Text
-                    className={`font-bold text-base ${
-                      isStepValid() ? "text-white" : "text-gray-500"
-                    }`}
-                  >
-                    Next
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                  Next
+                </Text>
+              </TouchableOpacity>
             </>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <>
               <Text className="text-base text-center text-gray-600 font-medium mb-6">
                 Profile Photo
@@ -610,7 +572,7 @@ export default function SignUpPage() {
               </View>
 
               {/* Navigation Buttons */}
-              <View className="flex-row mb-4">
+              <View className="flex-row mb-16">
                 <TouchableOpacity
                   onPress={handleBack}
                   className="flex-1 bg-gray-100 rounded-full py-4 items-center justify-center mr-2"
@@ -622,16 +584,25 @@ export default function SignUpPage() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleNext}
-                  className="flex-1 bg-pink-500 rounded-full py-4 items-center justify-center ml-2 shadow-md"
+                  className={`flex-1 rounded-full py-4 items-center justify-center ml-2 shadow-md ${
+                    isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                  }`}
                   activeOpacity={0.8}
+                  disabled={!isStepValid()}
                 >
-                  <Text className="text-white font-bold text-base">Next</Text>
+                  <Text
+                    className={`font-bold text-base ${
+                      isStepValid() ? "text-white" : "text-gray-500"
+                    }`}
+                  >
+                    Next
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <>
               <Text className="text-base text-center text-gray-600 font-medium mb-6">
                 Your Preferences
