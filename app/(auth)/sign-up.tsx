@@ -5,13 +5,13 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface SelectedImage {
   uri: string;
@@ -252,9 +252,9 @@ export default function SignUpPage() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Image/Logo */}
-        <View className="items-center pt-8">
-          <View className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center">
-            <Text className="text-6xl">😂</Text>
+        <View className="items-center pt-4">
+          <View className="w-32 h-32 items-center justify-center">
+            <Text className="text-6xl mt-4">😂</Text>
           </View>
         </View>
 
@@ -496,7 +496,7 @@ export default function SignUpPage() {
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <View className="w-40 h-40 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 items-center justify-center">
+                    <View className="w-80 h-80 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 items-center justify-center">
                       <Text className="text-4xl">📷</Text>
                     </View>
                   )}
@@ -535,7 +535,7 @@ export default function SignUpPage() {
                     <TouchableOpacity
                       key={g}
                       onPress={() => setGender(g.toLowerCase())}
-                      className={`px-6 py-3 rounded-full mr-2 mb-2 border-2 ${
+                      className={`px-6 py-3 rounded-l mr-2 mb-2 border-2 ${
                         gender === g.toLowerCase()
                           ? "bg-pink-500 border-pink-500"
                           : "bg-gray-50 border-gray-200"
@@ -563,7 +563,7 @@ export default function SignUpPage() {
                   <Text className="text-pink-500">*</Text>
                 </Text>
                 <View className="flex-row flex-wrap">
-                  {["Men", "Women", "Everyone"].map((pref) => (
+                  {["Wood 🪵", "Women", "Everyone"].map((pref) => (
                     <TouchableOpacity
                       key={pref}
                       onPress={() => setPreferences(pref.toLowerCase())}
