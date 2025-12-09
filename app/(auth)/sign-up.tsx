@@ -1,23 +1,22 @@
-import { supabase } from "@/lib/supabase/supabase";
 import * as ImagePicker from "expo-image-picker";
-import { Link } from "expo-router";
+import { Link } from "expo-router"; // or your navigation library
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
+  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-type SelectedImage = {
+interface SelectedImage {
   uri: string;
   type?: string;
-};
+}
 
 export default function SignUpPage() {
   const [step, setStep] = useState(1);
@@ -28,7 +27,6 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(
     null
   );
@@ -45,6 +43,7 @@ export default function SignUpPage() {
     gender: "",
     birthdate: "",
     preferences: "",
+    image: "",
   });
 
   // Real-time validation functions
@@ -59,8 +58,6 @@ export default function SignUpPage() {
     if (!password) return "Password is required";
     if (password.length < 8) return "Password must be at least 8 characters";
     if (!/(?=.*[a-z])/.test(password)) return "Must contain a lowercase letter";
-    // if (!/(?=.*[A-Z])/.test(password))
-    //   return "Must contain an uppercase letter";
     if (!/(?=.*\d)/.test(password)) return "Must contain a number";
     return "";
   };
@@ -123,27 +120,25 @@ export default function SignUpPage() {
           email.trim() &&
           password &&
           confirmPassword &&
+          birthdate &&
           !errors.fullName &&
           !errors.username &&
           !errors.email &&
           !errors.password &&
-          !errors.confirmPassword
+          !errors.confirmPassword &&
+          !errors.birthdate
         );
       case 2:
-        return gender && birthdate && !errors.birthdate;
-      case 3:
-        return true; // Profile photo is optional
-      case 4:
-        return preferences;
+        return gender && preferences && selectedImage; // Image is now required
       default:
         return false;
     }
   };
 
   const handleNext = () => {
-    if (step < 4 && isStepValid()) {
+    if (isStepValid()) {
       setStep(step + 1);
-    } else if (!isStepValid()) {
+    } else {
       Alert.alert(
         "Validation Error",
         "Please fill in all required fields correctly"
@@ -163,7 +158,7 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
-      let uploadedAvatarUrl = avatarUrl;
+      let uploadedAvatarUrl = "";
 
       if (selectedImage) {
         const fileExt = selectedImage.uri.split(".").pop();
@@ -173,21 +168,10 @@ export default function SignUpPage() {
         const response = await fetch(selectedImage.uri);
         const blob = await response.blob();
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, blob, {
-            contentType: selectedImage.type || "image/jpeg",
-          });
+        // Your Supabase upload code here
+        // const { data: uploadData, error: uploadError } = await supabase.storage...
 
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        uploadedAvatarUrl = publicUrlData.publicUrl;
+        uploadedAvatarUrl = "uploaded-url"; // Replace with actual URL
       }
 
       console.log({
@@ -229,7 +213,6 @@ export default function SignUpPage() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
-      setAvatarUrl("");
     }
   };
 
@@ -252,14 +235,13 @@ export default function SignUpPage() {
 
     if (!result.canceled) {
       setSelectedImage(result.assets[0]);
-      setAvatarUrl("");
     }
   };
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator className="text-gray-500 text-base" />
+        <ActivityIndicator size="large" color="#ec4899" />
       </SafeAreaView>
     );
   }
@@ -271,27 +253,28 @@ export default function SignUpPage() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Image/Logo */}
-        <View className="items-center">
-          <View className="w-32 h-28 pt-4 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center">
+        <View className="items-center pt-8">
+          <View className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center">
             <Text className="text-6xl">😂</Text>
           </View>
         </View>
 
-        {/* Welcome Text */}
-        <View className="px-8 mb-4">
-          <Text className="text-xs text-center uppercase tracking-widest text-gray-500 font-medium mb-3">
-            Welcome to RizzUp
-          </Text>
-
-          <Text className="text-3xl font-bold text-gray-800 text-center leading-tight">
-            Create Your Account
-          </Text>
-        </View>
+        {/* Welcome Text - Only show on step 1 */}
+        {step === 1 && (
+          <View className="px-8 mb-4 mt-6">
+            <Text className="text-xs text-center uppercase tracking-widest text-gray-500 font-medium mb-3">
+              Welcome to RizzUp
+            </Text>
+            <Text className="text-3xl font-bold text-gray-800 text-center leading-tight">
+              Create Your Account
+            </Text>
+          </View>
+        )}
 
         {/* Progress Indicator */}
-        <View className="px-8 mb-6">
+        <View className="px-8 mb-6 mt-6">
           <View className="flex-row items-center justify-center">
-            {[1, 2, 3].map((s) => (
+            {[1, 2].map((s) => (
               <View
                 key={s}
                 className={`h-2 rounded-full mx-1 ${
@@ -410,7 +393,7 @@ export default function SignUpPage() {
               </View>
 
               {/* Confirm Password Input */}
-              <View className="mb-6">
+              <View className="mb-4">
                 <TextInput
                   placeholder="Confirm password"
                   value={confirmPassword}
@@ -437,7 +420,7 @@ export default function SignUpPage() {
               </View>
 
               {/* Birthdate Input */}
-              <View className="mb-4">
+              <View className="mb-6">
                 <Text className="text-sm text-gray-600 mb-2 px-1">
                   Date of Birth
                 </Text>
@@ -465,9 +448,90 @@ export default function SignUpPage() {
                 ) : null}
               </View>
 
+              {/* Next Button */}
+              <TouchableOpacity
+                onPress={handleNext}
+                className={`rounded-full py-4 items-center justify-center mb-4 shadow-md ${
+                  isStepValid() ? "bg-pink-500" : "bg-gray-300"
+                }`}
+                activeOpacity={0.8}
+                disabled={!isStepValid()}
+              >
+                <Text
+                  className={`font-bold text-base ${
+                    isStepValid() ? "text-white" : "text-gray-500"
+                  }`}
+                >
+                  Next
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <Text className="text-base text-center text-gray-600 font-medium mb-6">
+                Complete Your Profile
+              </Text>
+
+              {/* Profile Photo - Required */}
+              <View className="mb-6">
+                <Text className="text-sm text-gray-600 mb-3 px-1">
+                  Profile Picture <Text className="text-pink-500">*</Text>
+                </Text>
+
+                {/* Square Image Preview */}
+                <View className="items-center mb-4">
+                  {selectedImage ? (
+                    <View className="relative">
+                      <Image
+                        source={{ uri: selectedImage.uri }}
+                        className="w-80 h-80 rounded-2xl"
+                        resizeMode="cover"
+                      />
+                      <TouchableOpacity
+                        onPress={() => setSelectedImage(null)}
+                        className="absolute -top-2 -right-2 bg-pink-500 rounded-full w-8 h-8 items-center justify-center shadow-lg"
+                        activeOpacity={0.7}
+                      >
+                        <Text className="text-white font-bold text-lg">✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View className="w-40 h-40 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 items-center justify-center">
+                      <Text className="text-4xl">📷</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Upload Buttons */}
+                <View className="flex-row mb-4">
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center mr-2"
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-gray-700 font-medium text-sm">
+                      📷 Choose Photo
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={takePhoto}
+                    className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center ml-2"
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-gray-700 font-medium text-sm">
+                      📸 Take Photo
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               {/* Gender Selection */}
-              <View className="mb-4">
-                <Text className="text-sm text-gray-600 mb-2 px-1">Gender</Text>
+              <View className="mb-6">
+                <Text className="text-sm text-gray-600 mb-3 px-1">
+                  Gender <Text className="text-pink-500">*</Text>
+                </Text>
                 <View className="flex-row flex-wrap">
                   {["Male", "Female", "Non-binary", "Other"].map((g) => (
                     <TouchableOpacity
@@ -494,124 +558,11 @@ export default function SignUpPage() {
                 </View>
               </View>
 
-              {/* Next Button */}
-              <TouchableOpacity
-                onPress={handleNext}
-                className={`rounded-full py-4 items-center justify-center mb-4 shadow-md ${
-                  isStepValid() ? "bg-pink-500" : "bg-gray-300"
-                }`}
-                activeOpacity={0.8}
-                disabled={!isStepValid()}
-              >
-                <Text
-                  className={`font-bold text-base ${
-                    isStepValid() ? "text-white" : "text-gray-500"
-                  }`}
-                >
-                  Next
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <Text className="text-base text-center text-gray-600 font-medium mb-6">
-                Profile Photo
-              </Text>
-
-              {/* Avatar Upload */}
-              <View className="mb-6">
-                <Text className="text-sm text-gray-600 mb-3 px-1">
-                  Profile Picture (Optional)
-                </Text>
-
-                {/* Image Preview */}
-                {selectedImage && (
-                  <View className="items-center mb-4">
-                    <Image
-                      source={{ uri: selectedImage.uri }}
-                      className="w-32 h-32 rounded-full"
-                      resizeMode="cover"
-                    />
-                    <TouchableOpacity
-                      onPress={() => setSelectedImage(null)}
-                      className="mt-2"
-                      activeOpacity={0.7}
-                    >
-                      <Text className="text-sm text-pink-500 font-medium">
-                        Remove Photo
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {/* Upload Buttons */}
-                {!selectedImage && (
-                  <View className="flex-row mb-4">
-                    <TouchableOpacity
-                      onPress={pickImage}
-                      className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center mr-2"
-                      activeOpacity={0.7}
-                    >
-                      <Text className="text-gray-700 font-medium text-sm">
-                        📷 Choose Photo
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={takePhoto}
-                      className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-2xl py-4 items-center justify-center ml-2"
-                      activeOpacity={0.7}
-                    >
-                      <Text className="text-gray-700 font-medium text-sm">
-                        📸 Take Photo
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-
-              {/* Navigation Buttons */}
-              <View className="flex-row mb-16">
-                <TouchableOpacity
-                  onPress={handleBack}
-                  className="flex-1 bg-gray-100 rounded-full py-4 items-center justify-center mr-2"
-                  activeOpacity={0.8}
-                >
-                  <Text className="text-gray-700 font-bold text-base">
-                    Back
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleNext}
-                  className={`flex-1 rounded-full py-4 items-center justify-center ml-2 shadow-md ${
-                    isStepValid() ? "bg-pink-500" : "bg-gray-300"
-                  }`}
-                  activeOpacity={0.8}
-                  disabled={!isStepValid()}
-                >
-                  <Text
-                    className={`font-bold text-base ${
-                      isStepValid() ? "text-white" : "text-gray-500"
-                    }`}
-                  >
-                    Next
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <Text className="text-base text-center text-gray-600 font-medium mb-6">
-                Your Preferences
-              </Text>
-
               {/* Preferences Selection */}
               <View className="mb-6">
                 <Text className="text-sm text-gray-600 mb-3 px-1">
-                  What are you looking for?
+                  What are you looking for?{" "}
+                  <Text className="text-pink-500">*</Text>
                 </Text>
                 <View className="flex-row flex-wrap">
                   {["Men", "Women", "Everyone"].map((pref) => (
@@ -637,14 +588,13 @@ export default function SignUpPage() {
                     </TouchableOpacity>
                   ))}
                 </View>
-
                 <Text className="text-xs text-gray-500 px-1 mt-2">
                   You can change this later in your settings
                 </Text>
               </View>
 
               {/* Navigation Buttons */}
-              <View className="flex-row mb-4">
+              <View className="flex-row mb-16">
                 <TouchableOpacity
                   onPress={handleBack}
                   className="flex-1 bg-gray-100 rounded-full py-4 items-center justify-center mr-2"
