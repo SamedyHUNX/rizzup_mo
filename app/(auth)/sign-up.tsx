@@ -1,5 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
-import { Link } from "expo-router"; // or your navigation library
+import { Link } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -129,7 +129,7 @@ export default function SignUpPage() {
           !errors.birthdate
         );
       case 2:
-        return gender && preferences && selectedImage; // Image is now required
+        return gender && preferences && selectedImage;
       default:
         return false;
     }
@@ -168,10 +168,9 @@ export default function SignUpPage() {
         const response = await fetch(selectedImage.uri);
         const blob = await response.blob();
 
-        // Your Supabase upload code here
         // const { data: uploadData, error: uploadError } = await supabase.storage...
 
-        uploadedAvatarUrl = "uploaded-url"; // Replace with actual URL
+        uploadedAvatarUrl = "uploaded-url";
       }
 
       console.log({
@@ -259,7 +258,6 @@ export default function SignUpPage() {
           </View>
         </View>
 
-        {/* Welcome Text - Only show on step 1 */}
         {step === 1 && (
           <View className="px-8 mb-4 mt-6">
             <Text className="text-xs text-center uppercase tracking-widest text-gray-500 font-medium mb-3">
