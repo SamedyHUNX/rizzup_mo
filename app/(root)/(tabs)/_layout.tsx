@@ -54,12 +54,42 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="explore"
+        name="discover"
         options={{
-          title: "Explore",
+          title: "Discover",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="search-outline" focused={focused} title="Explore" />
+            <TabIcon
+              icon="compass-outline"
+              focused={focused}
+              title="Discover"
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="matches"
+        options={{
+          title: "Matches",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon="heart-outline" focused={focused} title="Matches" />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: "Messages",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon="chatbubble-outline"
+              focused={focused}
+              title="Messages"
+            />
           ),
         }}
       />

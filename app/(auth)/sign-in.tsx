@@ -1,5 +1,5 @@
 import { useAuth } from "@/lib/providers/auth-provider";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -16,7 +16,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { loading, signIn, error } = useAuth();
+  const {
+    loading: signInLoading,
+    signIn,
+    error: signInError,
+    success: signInSuccess,
+    user,
+  } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -26,20 +32,24 @@ export default function SignInPage() {
     }
   };
 
-  if (error) {
-    Alert.alert("Error", error);
+  if (signInError) {
+    Alert.alert("Error", signInError);
   }
 
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
   };
 
-  if (loading) {
+  if (signInLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator className="text-gray-500 text-base" />
       </SafeAreaView>
     );
+  }
+
+  if (signInSuccess) {
+    router.replace("/");
   }
 
   return (

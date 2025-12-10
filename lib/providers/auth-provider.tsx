@@ -14,6 +14,7 @@ interface AuthContextType {
   error: string | null;
   loading: boolean;
   isLoggedIn: boolean;
+  success: boolean;
   initialized: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
+  const [success, setSuccess] = useState<boolean>(false);
   const { loading, error, withAsync, setError } = useAsyncHandler();
 
   const isLoggedIn = !!user;
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { subscription: authSubscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user ?? null);
+        setSuccess(true);
         setInitialized(true);
       });
 
@@ -88,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         error,
         initialized,
+        success,
       }}
     >
       {children}
