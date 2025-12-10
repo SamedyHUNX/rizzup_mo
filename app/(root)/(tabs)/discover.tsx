@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -32,8 +33,10 @@ export default function Discover() {
     async function loadUsers() {
       try {
         const potentialMatchesData = await getPotentialMatches();
+        console.log(potentialMatchesData);
         setPotentialMatches(potentialMatchesData);
-      } catch (error) {
+      } catch (error: any) {
+        Alert.alert("Error", error.message);
         console.error(error);
       } finally {
         setLoading(false);
@@ -80,16 +83,14 @@ export default function Discover() {
 
   if (loading) {
     return (
-      <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
-        <SafeAreaView className="flex-1 items-center justify-center">
-          <View className="items-center">
-            <ActivityIndicator size="large" color="#ec4899" />
-            <Text className="mt-4 text-gray-600 text-base">
-              Finding your matches...
-            </Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50">
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#ec4899" />
+          <Text className="mt-4 text-gray-600">
+            Loading potential matches...
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -143,6 +144,19 @@ export default function Discover() {
 
   const currentPotentialMatch = potentialMatches[currentIndex];
 
+  if (!currentPotentialMatch) {
+    return (
+      <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
+        <SafeAreaView className="flex-1 justify-center items-center">
+          <Text className="text-gray-600">No profile data available</Text>
+          <TouchableOpacity onPress={() => setCurrentIndex((prev) => prev + 1)}>
+            <Text className="text-pink-500 mt-4">Skip →</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
   return (
     <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
       <SafeAreaView className="flex-1">
@@ -157,7 +171,7 @@ export default function Discover() {
                 onPress={() => router.back()}
                 className="p-2 rounded-full bg-white/20 active:bg-white/30"
               >
-                <Icon name="chevron-back" size={24} color="#374151" />
+                <Icon name="arrow-back" size={24} color="#374151" />
               </TouchableOpacity>
               <View className="flex-1" />
             </View>
@@ -176,7 +190,6 @@ export default function Discover() {
           <View className="max-w-md mx-auto w-full">
             <MatchCard user={currentPotentialMatch} />
 
-            {/* Match Buttons */}
             <View className="mt-8">
               <MatchButtons onLike={handleLike} onPass={handlePass} />
             </View>
