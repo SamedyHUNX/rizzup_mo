@@ -33,7 +33,6 @@ export default function Discover() {
     async function loadUsers() {
       try {
         const potentialMatchesData = await getPotentialMatches();
-        console.log(potentialMatchesData);
         setPotentialMatches(potentialMatchesData);
       } catch (error: any) {
         Alert.alert("Error", error.message);
@@ -158,52 +157,57 @@ export default function Discover() {
   }
 
   return (
-    <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
-      <SafeAreaView className="flex-1">
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 32 }}
-        >
-          {/* Header */}
-          <View className="mb-8">
-            <View className="flex-row items-center justify-between mb-4">
-              <TouchableOpacity
-                onPress={() => router.back()}
-                className="p-2 rounded-full bg-white/20 active:bg-white/30"
-              >
-                <Icon name="arrow-back" size={24} color="#374151" />
-              </TouchableOpacity>
-              <View className="flex-1" />
-            </View>
+    <SafeAreaView className="flex-1">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 32 }}
+      >
+        {/* Header */}
+        <View className="mb-8">
+          {/* Header Row */}
+          <View className="flex-row items-center justify-between mb-4">
+            {/* Left: Back Button */}
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="p-2 rounded-full bg-white/20 active:bg-white/30"
+            >
+              <Icon name="arrow-back" size={24} color="#374151" />
+            </TouchableOpacity>
 
-            <View className="items-center">
-              <Text className="text-3xl font-rubik-bold text-gray-900 mb-2">
-                Discover Matches
-              </Text>
-              <Text className="text-gray-600 text-base">
-                {currentIndex + 1} of {potentialMatches.length} profiles
-              </Text>
-            </View>
+            {/* Middle: Title */}
+            <Text className="text-3xl font-rubik-bold text-gray-900 mb-2 text-center flex-1">
+              Discover Matches
+            </Text>
+
+            {/* Right: Spacer (keeps title centered) */}
+            <View style={{ width: 40 }} />
           </View>
 
-          {/* Match Card */}
-          <View className="max-w-md mx-auto w-full">
-            <MatchCard user={currentPotentialMatch} />
-
-            <View className="mt-8">
-              <MatchButtons onLike={handleLike} onPass={handlePass} />
-            </View>
+          {/* Subtext */}
+          <View className="items-center">
+            <Text className="text-gray-600 text-base">
+              {currentIndex + 1} of {potentialMatches.length} profiles
+            </Text>
           </View>
+        </View>
 
-          {showMatchNotification && matchedUser && (
-            <MatchNotification
-              match={matchedUser}
-              onClose={handleCloseMatchNotification}
-              onStartChat={handleStartChat}
-            />
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+        {/* Match Card */}
+        <View className="max-w-md mx-auto w-full">
+          <MatchCard user={currentPotentialMatch} />
+
+          <View className="mt-8">
+            <MatchButtons onLike={handleLike} onPass={handlePass} />
+          </View>
+        </View>
+
+        {showMatchNotification && matchedUser && (
+          <MatchNotification
+            match={matchedUser}
+            onClose={handleCloseMatchNotification}
+            onStartChat={handleStartChat}
+          />
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
