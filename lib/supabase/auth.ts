@@ -1,4 +1,4 @@
-import { supabase } from "./supabase/supabase";
+import { supabase } from "./supabase";
 
 export function signIn({
   email,
