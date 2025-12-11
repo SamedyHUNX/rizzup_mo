@@ -1,4 +1,3 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
@@ -10,32 +9,39 @@ export function MatchButtons({
   onPass: () => void;
 }) {
   return (
-    <View className="flex-row justify-center items-center gap-6">
+    <View className="flex-row justify-center items-center gap-6 py-4">
       {/* Pass Button */}
       <TouchableOpacity
         onPress={onPass}
-        className="w-16 h-16 rounded-full bg-white shadow-lg items-center justify-center active:scale-95"
+        className="w-16 h-16 rounded-full bg-white items-center justify-center active:scale-90"
         style={{
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
+          elevation: 4,
         }}
       >
-        <Icon name="close" size={32} color="#ef4444" />
+        <View className="w-full h-full rounded-full border border-gray-100 items-center justify-center">
+          <Icon name="close" size={28} color="#ef4444" />
+        </View>
       </TouchableOpacity>
 
       {/* Like Button */}
       <TouchableOpacity
         onPress={onLike}
-        className="w-20 h-20 rounded-full items-center justify-center active:scale-95 overflow-hidden"
+        className="w-16 h-16 rounded-full bg-white items-center justify-center active:scale-90"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
       >
-        <LinearGradient
-          colors={["#ec4899", "#ef4444"]}
-          className="w-full h-full items-center justify-center"
-        >
-          <Icon name="favorite" size={36} color="#ffffff" />
-        </LinearGradient>
+        <View className="w-full h-full rounded-full border border-gray-100 items-center justify-center">
+          <Icon name="favorite" size={28} color="#4ade80" />
+        </View>
       </TouchableOpacity>
     </View>
   );

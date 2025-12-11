@@ -52,8 +52,9 @@ export default function Discover() {
         }
 
         setCurrentIndex((prev) => prev + 1);
-      } catch (err) {
-        console.error(err);
+      } catch (error: any) {
+        Alert.alert("Error", error.message);
+        console.error(error);
       }
     }
   }
@@ -175,7 +176,7 @@ export default function Discover() {
         <View className="max-w-md mx-auto w-full">
           <MatchCard user={currentPotentialMatch} />
 
-          <View className="mt-8">
+          <View className="mt-8 absolute left-0 bottom-[-50px] right-0">
             <MatchButtons onLike={handleLike} onPass={handlePass} />
           </View>
         </View>

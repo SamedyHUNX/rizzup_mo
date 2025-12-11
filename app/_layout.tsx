@@ -11,7 +11,7 @@ const InitialLayout = () => {
 
   // 🚨 Prevent redirects until auth state is known
   if (!initialized) {
-    return null; // or a splash/loading screen
+    return null;
   }
 
   if (user && inAuthGroup) {
