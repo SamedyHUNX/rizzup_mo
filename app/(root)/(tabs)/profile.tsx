@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/providers/auth-provider";
 import { getCurrentUserProfile } from "@/lib/supabase/profile";
 import { UserProfile } from "@/lib/supabase/queries";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const { signOut } = useAuth();
+  const router = useRouter();
 
   const loadProfile = async () => {
     try {
@@ -52,9 +54,8 @@ export default function ProfilePage() {
   };
 
   const handleEditProfile = () => {
-    // Navigate to edit profile screen
-    // navigation.navigate('EditProfile');
-    console.log("Navigate to edit profile");
+    // Navigate to Edit Profile Screen
+    router.push("/profile/edit");
   };
 
   if (loading) {

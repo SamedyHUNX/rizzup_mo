@@ -470,7 +470,6 @@ export default function SignUpPage() {
                   />
                 )}
 
-                {/* iOS: Add done button */}
                 {showDatePicker && Platform.OS === "ios" && (
                   <TouchableOpacity
                     onPress={() => setShowDatePicker(false)}
