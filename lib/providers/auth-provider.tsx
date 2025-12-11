@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { supabase } from "../supabase/supabase";
-import { useAsyncHandler } from "../use-async-handler";
+import { useAsyncHandler } from "../helpers/use-async-handler";
 
 interface AuthContextType {
   user: User | null;

@@ -1,10 +1,12 @@
+import Loading from "@/components/loading";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { Link } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -15,7 +17,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface SelectedImage {
   uri: string;
-  type?: string;
 }
 
 export default function SignUpPage() {
@@ -26,7 +27,8 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [birthdate, setBirthdate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(
     null
   );
@@ -85,29 +87,45 @@ export default function SignUpPage() {
     return "";
   };
 
-  const validateBirthdate = (date: string) => {
+  const validateBirthdate = (date: Date | null) => {
     if (!date) return "Date of birth is required";
-    const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
-    if (!dateRegex.test(date)) return "Please use MM/DD/YYYY format";
 
-    const [month, day, year] = date.split("/").map(Number);
-    const birthDate = new Date(year, month - 1, day);
     const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+    let age = today.getFullYear() - date.getFullYear();
+    const monthDiff = today.getMonth() - date.getMonth();
 
     if (
       monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      (monthDiff === 0 && today.getDate() < date.getDate())
     ) {
       age--;
     }
 
     if (age < 18) return "You must be at least 18 years old";
-    if (year < 1900 || year > today.getFullYear())
-      return "Please enter a valid year";
+    if (date.getFullYear() < 1900) return "Please enter a valid year";
+    if (date > today) return "Birthdate cannot be in the future";
 
     return "";
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    // On Android, the picker closes automatically
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (selectedDate) {
+      setBirthdate(selectedDate);
+      setErrors({ ...errors, birthdate: validateBirthdate(selectedDate) });
+    }
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return "";
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
   };
 
   // Check if current step is valid
@@ -179,7 +197,7 @@ export default function SignUpPage() {
         email,
         password,
         gender,
-        birthdate,
+        birthdate: formatDate(birthdate),
         avatarUrl: uploadedAvatarUrl,
         preferences,
       });
@@ -238,11 +256,7 @@ export default function SignUpPage() {
   };
 
   if (loading) {
-    return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#ec4899" />
-      </SafeAreaView>
-    );
+    return <Loading />;
   }
 
   return (
@@ -254,7 +268,7 @@ export default function SignUpPage() {
         {/* Header Image/Logo */}
         <View className="items-center pt-4">
           <View className="w-32 h-32 items-center justify-center">
-            <Text className="text-6xl mt-4">😂</Text>
+            <Text className="text-6xl mt-4">💕</Text>
           </View>
         </View>
 
@@ -417,33 +431,55 @@ export default function SignUpPage() {
                 ) : null}
               </View>
 
-              {/* Birthdate Input */}
+              {/* Birthdate Picker */}
               <View className="mb-6">
                 <Text className="text-sm text-gray-600 mb-2 px-1">
                   Date of Birth
                 </Text>
-                <TextInput
-                  placeholder="MM/DD/YYYY"
-                  value={birthdate}
-                  onChangeText={(text) => {
-                    setBirthdate(text);
-                    setErrors({
-                      ...errors,
-                      birthdate: validateBirthdate(text),
-                    });
-                  }}
-                  keyboardType="numbers-and-punctuation"
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
                   className={`bg-gray-50 border-2 ${
                     errors.birthdate ? "border-red-400" : "border-gray-200"
-                  } rounded-2xl px-4 py-4 text-base text-gray-800`}
-                  placeholderTextColor="#9CA3AF"
-                  maxLength={10}
-                />
+                  } rounded-2xl px-4 py-4`}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    className={`text-base ${
+                      birthdate ? "text-gray-800" : "text-gray-400"
+                    }`}
+                  >
+                    {birthdate
+                      ? formatDate(birthdate)
+                      : "Select your birthdate"}
+                  </Text>
+                </TouchableOpacity>
                 {errors.birthdate ? (
                   <Text className="text-red-500 text-xs mt-1 px-2">
                     {errors.birthdate}
                   </Text>
                 ) : null}
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={birthdate || new Date(2000, 0, 1)}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                    minimumDate={new Date(1900, 0, 1)}
+                  />
+                )}
+
+                {/* iOS: Add done button */}
+                {showDatePicker && Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    onPress={() => setShowDatePicker(false)}
+                    className="bg-pink-500 rounded-full py-3 mt-2 items-center"
+                    activeOpacity={0.8}
+                  >
+                    <Text className="text-white font-semibold">Done</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Next Button */}
@@ -535,7 +571,7 @@ export default function SignUpPage() {
                     <TouchableOpacity
                       key={g}
                       onPress={() => setGender(g.toLowerCase())}
-                      className={`px-6 py-3 rounded-l mr-2 mb-2 border-2 ${
+                      className={`px-6 py-3 rounded-full mr-2 mb-2 border-2 ${
                         gender === g.toLowerCase()
                           ? "bg-pink-500 border-pink-500"
                           : "bg-gray-50 border-gray-200"
@@ -563,7 +599,7 @@ export default function SignUpPage() {
                   <Text className="text-pink-500">*</Text>
                 </Text>
                 <View className="flex-row flex-wrap">
-                  {["Wood 🪵", "Women", "Everyone"].map((pref) => (
+                  {["Men", "Women", "Everyone"].map((pref) => (
                     <TouchableOpacity
                       key={pref}
                       onPress={() => setPreferences(pref.toLowerCase())}
@@ -623,7 +659,7 @@ export default function SignUpPage() {
           )}
 
           {/* Sign In Link */}
-          <View className="flex-row items-center justify-center mb-8">
+          <View className="flex-row items-center justify-center my-8">
             <Text className="text-sm text-gray-600">
               Already have an account?{" "}
             </Text>
