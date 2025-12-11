@@ -1,25 +1,24 @@
 import { AuthProvider, useAuth } from "@/lib/providers/auth-provider";
-import { Slot, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { GlobalLoadingProvider } from "@/lib/providers/global-loading";
+import { Redirect, Slot, useSegments } from "expo-router";
 import "./global.css";
 
 const InitialLayout = () => {
   const { user, initialized } = useAuth();
   const segments = useSegments();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!initialized) return;
+  const inAuthGroup = segments[0] === "(auth)";
 
-    // Check if the path/url is in the (auth) group
-    const inAuthGroup = segments[0] === "(auth)";
+  // 🚨 Prevent redirects until auth state is known
+  if (!initialized) {
+    return null; // or a splash/loading screen
+  }
 
-    if (user && !inAuthGroup) {
-      router.replace("/");
-    } else if (!user) {
-      router.replace("/sign-in");
-    }
-  }, [user, initialized]);
+  if (user && inAuthGroup) {
+    return <Redirect href="/" />;
+  } else if (!user && !inAuthGroup) {
+    return <Redirect href="/sign-in" />;
+  }
 
   return <Slot />;
 };
@@ -27,7 +26,9 @@ const InitialLayout = () => {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <InitialLayout />
+      <GlobalLoadingProvider>
+        <InitialLayout />
+      </GlobalLoadingProvider>
     </AuthProvider>
   );
 }

@@ -9,9 +9,9 @@ export default function MatchCard({ user }: { user: UserProfile }) {
   const cardHeight = height * 0.65;
 
   return (
-    <View className="w-full max-w-sm mx-auto">
+    <View className="w-full max-w-full mx-auto">
       <View
-        className="rounded-3xl overflow-hidden shadow-2xl"
+        className="rounded-xl overflow-hidden shadow-2xl"
         style={{
           height: cardHeight,
           shadowColor: "#000",

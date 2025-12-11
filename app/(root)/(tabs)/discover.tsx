@@ -1,3 +1,4 @@
+import Loading from "@/components/loading";
 import { MatchButtons } from "@/components/match-buttons";
 import MatchCard from "@/components/match-card";
 import { MatchNotification } from "@/components/match-notification";
@@ -9,14 +10,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
@@ -81,63 +75,51 @@ export default function Discover() {
   };
 
   if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#ec4899" />
-          <Text className="mt-4 text-gray-600">
-            Loading potential matches...
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <Loading message="Loading potential matches..." />;
   }
 
   if (currentIndex >= potentialMatches.length) {
     return (
-      <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
-        <SafeAreaView className="flex-1 items-center justify-center px-8">
-          <View className="items-center max-w-md">
+      <SafeAreaView className="flex-1 items-center justify-center px-8">
+        <View className="items-center max-w-md">
+          <LinearGradient
+            colors={["#ec4899", "#ef4444"]}
+            className="w-24 h-24 rounded-full items-center justify-center mb-6"
+          >
+            <Text className="text-4xl">💕</Text>
+          </LinearGradient>
+
+          <Text className="text-2xl font-rubik-bold text-gray-900 mb-4 text-center">
+            No more profiles to show
+          </Text>
+
+          <Text className="text-gray-600 mb-6 text-center text-base">
+            Check back later for new matches, or try adjusting your preferences!
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => setCurrentIndex(0)}
+            className="overflow-hidden rounded-full"
+          >
             <LinearGradient
               colors={["#ec4899", "#ef4444"]}
-              className="w-24 h-24 rounded-full items-center justify-center mb-6"
+              className="py-3 px-6"
             >
-              <Text className="text-4xl">💕</Text>
+              <Text className="text-white font-rubik-semibold text-base">
+                Refresh
+              </Text>
             </LinearGradient>
+          </TouchableOpacity>
+        </View>
 
-            <Text className="text-2xl font-rubik-bold text-gray-900 mb-4 text-center">
-              No more profiles to show
-            </Text>
-
-            <Text className="text-gray-600 mb-6 text-center text-base">
-              Check back later for new matches, or try adjusting your
-              preferences!
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => setCurrentIndex(0)}
-              className="overflow-hidden rounded-full"
-            >
-              <LinearGradient
-                colors={["#ec4899", "#ef4444"]}
-                className="py-3 px-6"
-              >
-                <Text className="text-white font-rubik-semibold text-base">
-                  Refresh
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          {showMatchNotification && matchedUser && (
-            <MatchNotification
-              match={matchedUser}
-              onClose={handleCloseMatchNotification}
-              onStartChat={handleStartChat}
-            />
-          )}
-        </SafeAreaView>
-      </LinearGradient>
+        {showMatchNotification && matchedUser && (
+          <MatchNotification
+            match={matchedUser}
+            onClose={handleCloseMatchNotification}
+            onStartChat={handleStartChat}
+          />
+        )}
+      </SafeAreaView>
     );
   }
 
@@ -145,14 +127,12 @@ export default function Discover() {
 
   if (!currentPotentialMatch) {
     return (
-      <LinearGradient colors={["#fdf2f8", "#fef2f2"]} className="flex-1">
-        <SafeAreaView className="flex-1 justify-center items-center">
-          <Text className="text-gray-600">No profile data available</Text>
-          <TouchableOpacity onPress={() => setCurrentIndex((prev) => prev + 1)}>
-            <Text className="text-pink-500 mt-4">Skip →</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </LinearGradient>
+      <SafeAreaView className="flex-1 justify-center items-center">
+        <Text className="text-gray-600">No profile data available</Text>
+        <TouchableOpacity onPress={() => setCurrentIndex((prev) => prev + 1)}>
+          <Text className="text-pink-500 mt-4">Skip →</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
     );
   }
 
