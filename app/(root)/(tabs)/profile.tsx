@@ -1,8 +1,8 @@
 import Loading from "@/components/loading";
 import { calculateAge } from "@/lib/helpers/calculate-age";
 import { useAuth } from "@/lib/providers/auth-provider";
+import { UserProfile } from "@/lib/supabase/matches";
 import { getCurrentUserProfile } from "@/lib/supabase/profile";
-import { UserProfile } from "@/lib/supabase/queries";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";

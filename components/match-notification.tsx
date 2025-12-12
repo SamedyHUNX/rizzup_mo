@@ -1,4 +1,4 @@
-import { UserProfile } from "@/lib/supabase/queries";
+import { UserProfile } from "@/lib/supabase/matches";
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, TouchableOpacity, View } from "react-native";
 

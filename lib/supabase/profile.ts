@@ -1,4 +1,4 @@
-import { UserProfile } from "./queries";
+import { UserProfile } from "./matches";
 import { supabase } from "./supabase";
 
 export async function getCurrentUserProfile() {
@@ -47,9 +47,61 @@ export async function updateUserProfile(profileData: Partial<UserProfile>) {
     .eq("id", user.id);
 
   if (error) {
-    console.log(error);
     return { success: false, error: error.message };
   }
 
   return { success: true };
+}
+
+export async function uploadProfilePhoto(formData: FormData) {
+  const file = formData.get("file") as File;
+
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "User not authenticated" };
+  }
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(fileName, buffer, {
+      contentType: file.type,
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+  // Update the user's profile immediately
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({
+      avatar_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (updateError) {
+    return { success: false, error: "Failed to update profile with new photo" };
+  }
+
+  return { success: true, url: publicUrl };
 }

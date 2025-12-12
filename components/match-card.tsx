@@ -1,5 +1,5 @@
 import { calculateAge } from "@/lib/helpers/calculate-age";
-import { UserProfile } from "@/lib/supabase/queries";
+import { UserProfile } from "@/lib/supabase/matches";
 import { LinearGradient } from "expo-linear-gradient";
 import { Dimensions, Image, Text, View } from "react-native";
 

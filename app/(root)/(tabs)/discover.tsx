@@ -6,7 +6,7 @@ import {
   getPotentialMatches,
   likeUser,
   UserProfile,
-} from "@/lib/supabase/queries";
+} from "@/lib/supabase/matches";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
