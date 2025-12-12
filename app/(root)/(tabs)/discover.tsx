@@ -20,16 +20,18 @@ export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchNotification, setShowMatchNotification] = useState(false);
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
+  const [error, setError] = useState<string>("");
 
   const router = useRouter();
 
   useEffect(() => {
     async function loadUsers() {
       try {
+        setError("");
         const potentialMatchesData = await getPotentialMatches();
         setPotentialMatches(potentialMatchesData);
       } catch (error: any) {
-        Alert.alert("Error", error.message);
+        setError(error.message);
         console.error(error);
       } finally {
         setLoading(false);
@@ -38,6 +40,12 @@ export default function Discover() {
 
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+    }
+  }, [error]);
 
   async function handleLike() {
     if (currentIndex < potentialMatches.length) {
@@ -71,7 +79,6 @@ export default function Discover() {
   };
 
   const handleStartChat = () => {
-    // Navigate to chat
     handleCloseMatchNotification();
   };
 

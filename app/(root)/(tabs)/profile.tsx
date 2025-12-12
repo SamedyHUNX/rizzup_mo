@@ -35,7 +35,6 @@ export default function ProfilePage() {
         setError("Failed to load profile");
       }
     } catch (error: any) {
-      Alert.alert("Error", error.message);
       console.error("Error loading profile: ", error);
       setError("Failed to load profile");
     } finally {
@@ -47,6 +46,12 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+    }
+  }, [error]);
 
   const onRefresh = () => {
     setRefreshing(true);
