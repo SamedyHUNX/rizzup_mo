@@ -7,21 +7,20 @@ export async function getCurrentUserProfile() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return null;
+    throw new Error("Not authenticated");
   }
 
-  const { data: profile, error } = await supabase
+  const { data: profileData, error } = await supabase
     .from("users")
     .select("*")
     .eq("id", user.id)
     .single();
 
   if (error) {
-    console.error("Error fetching profile:", error);
-    return null;
+    throw new Error(error.message);
   }
 
-  return profile;
+  return profileData;
 }
 
 export async function updateUserProfile(profileData: Partial<UserProfile>) {
@@ -30,7 +29,7 @@ export async function updateUserProfile(profileData: Partial<UserProfile>) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { success: false, error: "User not authenticated" };
+    throw new Error("Not authenticated");
   }
 
   const { error } = await supabase

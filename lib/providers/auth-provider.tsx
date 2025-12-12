@@ -6,8 +6,8 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useAsyncHandler } from "../hooks/use-async-handler";
 import { supabase } from "../supabase/supabase";
-import { useAsyncHandler } from "../helpers/use-async-handler";
 
 interface AuthContextType {
   user: User | null;
@@ -27,14 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
-  const { loading, error, withAsync, setError } = useAsyncHandler();
+  const { loading, message, type, run } = useAsyncHandler();
 
   const isLoggedIn = !!user;
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
 
-    withAsync(async () => {
+    run(async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = (email: string, password: string) =>
-    withAsync(async () => {
+    run(async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -66,14 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
   const signOut = () =>
-    withAsync(async () => {
+    run(async () => {
       await supabase.auth.signOut();
       setInitialized(false);
       setUser(null);
     });
 
   const refetch = () =>
-    withAsync(async () => {
+    run(async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         refetch,
         signIn,
-        error,
+        error: type === "error" ? message : "",
         initialized,
         success,
       }}

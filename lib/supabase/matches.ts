@@ -15,19 +15,25 @@ export interface UserProfile {
   last_active: string;
   is_verified: boolean;
   is_online?: boolean;
-  is_visible?: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export async function getPotentialMatches(): Promise<UserProfile[]> {
+interface ResponseObject {
+  success: boolean;
+  message?: string;
+  isMatch?: boolean;
+  data?: UserProfile[];
+}
+
+export async function getPotentialMatches(): Promise<ResponseObject> {
   // Get current user
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated");
+    return { success: false, message: "Not authenticated" };
   }
 
   // Get users the current user has already liked or passed
@@ -55,7 +61,7 @@ export async function getPotentialMatches(): Promise<UserProfile[]> {
     .limit(50);
 
   if (error) {
-    throw new Error("Failed to fetch potential matches");
+    return { success: false, message: "Failed to fetch potential matches" };
   }
 
   // Get user preferences
@@ -66,7 +72,7 @@ export async function getPotentialMatches(): Promise<UserProfile[]> {
     .single();
 
   if (prefsError) {
-    throw new Error("Failed to get user preferences");
+    return { success: false, message: "Failed to fetch potential matches" };
   }
 
   const currentUserPrefs = userPrefs.preferences as any;
@@ -100,7 +106,11 @@ export async function getPotentialMatches(): Promise<UserProfile[]> {
         updated_at: new Date().toISOString(),
       })) || [];
 
-  return filteredMatches;
+  return {
+    success: true,
+    message: "Potential matches fetched successfully",
+    data: filteredMatches,
+  };
 }
 
 export async function likeUser(toUserId: string) {
@@ -109,7 +119,7 @@ export async function likeUser(toUserId: string) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated.");
+    return { success: false, message: "Not authenticated" };
   }
 
   const { error: likeError } = await supabase.from("likes").insert({
@@ -118,7 +128,7 @@ export async function likeUser(toUserId: string) {
   });
 
   if (likeError) {
-    throw new Error("Failed to create like");
+    return { success: false, message: likeError.message };
   }
 
   const { data: existingLike, error: checkError } = await supabase
@@ -129,28 +139,28 @@ export async function likeUser(toUserId: string) {
     .single();
 
   if (checkError && checkError.code !== "PGRST116") {
-    throw new Error("Failed to check for match");
+    return { success: false, message: "Failed to check for matches" };
   }
 
   if (existingLike) {
-    const { data: matchedUser, error: userError } = await supabase
+    const { data, error: userError } = await supabase
       .from("users")
       .select("*")
       .eq("id", toUserId)
       .single();
 
     if (userError) {
-      throw new Error("Failed to fetch matched user");
+      return { success: false, message: "Failed to fetch matched user" };
     }
 
     return {
       success: true,
       isMatch: true,
-      matchedUser: matchedUser as UserProfile,
+      data: data as UserProfile,
     };
   }
 
-  return { success: true, isMatch: false };
+  return { success: true, isMatch: false, message: "User liked successfully" };
 }
 
 // Handle passing
@@ -160,7 +170,7 @@ export async function passUser(toUserId: string) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated");
+    return { success: false, message: "Not authenticated" };
   }
 
   const { error } = await supabase.from("passes").insert({
@@ -169,7 +179,7 @@ export async function passUser(toUserId: string) {
   });
 
   if (error) {
-    throw new Error("Failed to record pass");
+    return { success: false, message: error.message };
   }
 
   return { success: true };
@@ -182,7 +192,7 @@ export async function resetPasses() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated.");
+    return { success: false, message: "Not authenticated" };
   }
 
   const { error } = await supabase
@@ -191,8 +201,11 @@ export async function resetPasses() {
     .eq("from_user_id", user.id);
 
   if (error) {
-    throw new Error("Failed to reset passes");
+    return { success: false, message: "Oop, an error occurred" };
   }
 
-  return { success: true };
+  return {
+    success: true,
+    message: "Congrats! You can now review passed profiles again!",
+  };
 }

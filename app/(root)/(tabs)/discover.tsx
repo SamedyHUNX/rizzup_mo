@@ -2,98 +2,50 @@ import Loading from "@/components/loading";
 import { MatchButtons } from "@/components/match-buttons";
 import MatchCard from "@/components/match-card";
 import { MatchNotification } from "@/components/match-notification";
-import {
-  getPotentialMatches,
-  likeUser,
-  passUser,
-  UserProfile,
-} from "@/lib/supabase/matches";
+import { useMatchFlow } from "@/lib/hooks/use-match-flow";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function Discover() {
-  const [potentialMatches, setPotentialMatches] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showMatchNotification, setShowMatchNotification] = useState(false);
-  const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
-  const [error, setError] = useState<string>("");
+  const {
+    loading,
+    message,
+    type,
+    potentialMatches,
+    currentIndex,
+    matchedUser,
+    showMatchNotification,
+    setShowMatchNotification,
+    setMatchedUser,
+    loadUsers,
+    like,
+    pass,
+    reset,
+  } = useMatchFlow();
 
   const router = useRouter();
 
   useEffect(() => {
-    async function loadUsers() {
-      try {
-        setError("");
-        const potentialMatchesData = await getPotentialMatches();
-        setPotentialMatches(potentialMatchesData);
-      } catch (error: any) {
-        setError(error.message);
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+    if (!message) return;
+
+    if (type === "error") {
+      Alert.alert("Error", message);
+    } else if (type === "success") {
+      Toast.show({ type: "success", text1: "Success", text2: message });
     }
-
-    loadUsers();
-  }, []);
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert("Error", error);
-    }
-  }, [error]);
-
-  async function handleLike() {
-    if (currentIndex < potentialMatches.length) {
-      const likedUser = potentialMatches[currentIndex];
-
-      try {
-        // Record the pass first to mark as "seen"
-        await passUser(likedUser.id);
-
-        // Process the like
-        const result = await likeUser(likedUser.id);
-
-        if (result.isMatch) {
-          setMatchedUser(result.matchedUser!);
-          setShowMatchNotification(true);
-        }
-
-        setCurrentIndex((prev) => prev + 1);
-      } catch (error: any) {
-        setError(error.message);
-        console.error(error);
-      }
-    }
-  }
-
-  async function handlePass() {
-    if (currentIndex < potentialMatches.length) {
-      const passedUser = potentialMatches[currentIndex];
-
-      try {
-        await passUser(passedUser.id);
-        setCurrentIndex((prev) => prev + 1);
-      } catch (error: any) {
-        console.error(error);
-        setError(error.message);
-      }
-    }
-  }
+  }, [message, type]);
 
   const handleCloseMatchNotification = () => {
     setShowMatchNotification(false);
     setMatchedUser(null);
   };
 
-  const handleStartChat = () => {
-    handleCloseMatchNotification();
-  };
+  const handleStartChat = handleCloseMatchNotification;
 
   if (loading) {
     return <Loading message="Loading potential matches..." />;
@@ -101,36 +53,49 @@ export default function Discover() {
 
   if (currentIndex >= potentialMatches.length) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center px-8">
-        <View className="items-center max-w-md">
-          <LinearGradient
-            colors={["#ec4899", "#ef4444"]}
-            className="w-24 h-24 rounded-full items-center justify-center mb-6"
-          >
-            <Text className="text-4xl">💕</Text>
-          </LinearGradient>
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="flex-1 items-center justify-center px-6 ">
+          <View className="items-center max-w-md w-full bg-white rounded-3xl p-8 shadow-lg">
+            <View className="mb-6">
+              <Text className="text-5xl">💕</Text>
+            </View>
 
-          <Text className="text-2xl font-rubik-bold text-gray-900 mb-4 text-center">
-            No more profiles to show
-          </Text>
+            <Text className="text-3xl font-rubik-bold text-gray-900 mb-3 text-center">
+              That's Everyone!
+            </Text>
 
-          <Text className="text-gray-600 mb-6 text-center text-base">
-            Check back later for new matches, or try adjusting your preferences!
-          </Text>
+            <Text className="text-gray-500 mb-8 text-center text-base leading-6 px-4">
+              You've seen all available profiles. Check back soon for new
+              matches or adjust your preferences to see more people.
+            </Text>
 
-          <TouchableOpacity
-            onPress={() => setCurrentIndex(0)}
-            className="overflow-hidden rounded-full"
-          >
-            <LinearGradient
-              colors={["#ec4899", "#ef4444"]}
-              className="py-3 px-6"
+            <TouchableOpacity
+              onPress={reset}
+              className="w-full overflow-hidden rounded-md shadow-md"
+              activeOpacity={0.8}
             >
-              <Text className="text-white font-rubik-semibold text-base">
-                Refresh
+              <LinearGradient
+                colors={["#ec4899", "#ef4444"]}
+                className="py-4 px-8"
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text className="text-white font-rubik-bold text-center text-lg">
+                  Start Over
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.navigate("/profile")}
+              className="mt-4 py-3 px-6"
+              activeOpacity={0.7}
+            >
+              <Text className="text-pink-500 font-rubik-semibold text-center text-base">
+                Update Preferences
               </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {showMatchNotification && matchedUser && (
@@ -150,7 +115,7 @@ export default function Discover() {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
         <Text className="text-gray-600">No profile data available</Text>
-        <TouchableOpacity onPress={() => setCurrentIndex((prev) => prev + 1)}>
+        <TouchableOpacity onPress={pass}>
           <Text className="text-pink-500 mt-4">Skip →</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -163,11 +128,8 @@ export default function Discover() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 32 }}
       >
-        {/* Header */}
         <View className="mb-8">
-          {/* Header Row */}
           <View className="flex-row items-center justify-between mb-4">
-            {/* Left: Back Button */}
             <TouchableOpacity
               onPress={() => router.back()}
               className="p-2 rounded-full bg-white/20 active:bg-white/30"
@@ -175,16 +137,13 @@ export default function Discover() {
               <Icon name="arrow-back" size={24} color="#374151" />
             </TouchableOpacity>
 
-            {/* Middle: Title */}
             <Text className="text-3xl font-rubik-bold text-gray-900 mb-2 text-center flex-1">
               Discover Matches
             </Text>
 
-            {/* Right: Spacer (keeps title centered) */}
             <View style={{ width: 40 }} />
           </View>
 
-          {/* Subtext */}
           <View className="items-center">
             <Text className="text-gray-600 text-base">
               {currentIndex + 1} of {potentialMatches.length} profiles
@@ -192,12 +151,11 @@ export default function Discover() {
           </View>
         </View>
 
-        {/* Match Card */}
         <View className="max-w-md mx-auto w-full">
           <MatchCard user={currentPotentialMatch} />
 
           <View className="mt-8 absolute left-0 bottom-[-50px] right-0">
-            <MatchButtons onLike={handleLike} onPass={handlePass} />
+            <MatchButtons onLike={like} onPass={pass} />
           </View>
         </View>
 
