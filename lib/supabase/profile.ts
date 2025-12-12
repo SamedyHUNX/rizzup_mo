@@ -7,7 +7,7 @@ export async function getCurrentUserProfile() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated");
+    return { success: false, message: "Not authenticated" };
   }
 
   const { data: profileData, error } = await supabase
@@ -17,10 +17,14 @@ export async function getCurrentUserProfile() {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    return { success: false, message: error.message };
   }
 
-  return profileData;
+  return {
+    success: true,
+    message: "Profile fetched successfully",
+    data: profileData,
+  };
 }
 
 export async function updateUserProfile(profileData: Partial<UserProfile>) {

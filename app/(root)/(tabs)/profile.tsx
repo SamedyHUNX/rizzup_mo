@@ -1,11 +1,9 @@
 import Loading from "@/components/loading";
 import { calculateAge } from "@/lib/helpers/calculate-age";
-import { useAuth } from "@/lib/providers/auth-provider";
-import { UserProfile } from "@/lib/supabase/matches";
-import { getCurrentUserProfile } from "@/lib/supabase/profile";
+import { useProfileFlow } from "@/lib/hooks/use-profile-flow";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { router } from "expo-router";
+import { useEffect } from "react";
 import {
   Alert,
   Image,
@@ -16,47 +14,33 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const { signOut } = useAuth();
-  const router = useRouter();
-
-  const loadProfile = async () => {
-    try {
-      setError(null);
-      const profileData = await getCurrentUserProfile();
-      if (profileData) {
-        setProfile(profileData);
-      } else {
-        setError("Failed to load profile");
-      }
-    } catch (error: any) {
-      console.error("Error loading profile: ", error);
-      setError("Failed to load profile");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const {
+    loadProfile,
+    loading,
+    message,
+    type,
+    refreshing,
+    profile,
+    refresh,
+    signOut,
+  } = useProfileFlow();
 
   useEffect(() => {
     loadProfile();
   }, []);
 
   useEffect(() => {
-    if (error) {
-      Alert.alert("Error", error);
-    }
-  }, [error]);
+    if (!message) return;
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadProfile();
-  };
+    if (type === "error") {
+      Alert.alert("Error", message);
+    } else if (type === "success") {
+      Toast.show({ type: "success", text1: "Success", text2: message });
+    }
+  }, [message, type]);
 
   const handleEditProfile = () => {
     // Navigate to Edit Profile Screen
@@ -67,7 +51,7 @@ export default function ProfilePage() {
     return <Loading message="Loading your profile..." />;
   }
 
-  if (error || !profile) {
+  if ((type === "error" && message) || !profile) {
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50">
         <View className="flex-1 items-center justify-center px-8">
@@ -78,7 +62,7 @@ export default function ProfilePage() {
             Profile not found
           </Text>
           <Text className="text-gray-600 mb-6 text-center">
-            {error || "Unable to load your profile. Please try again."}
+            {message || "Unable to load your profile. Please try again."}
           </Text>
           <TouchableOpacity
             onPress={loadProfile}
@@ -103,7 +87,7 @@ export default function ProfilePage() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={refresh}
             colors={["#ec4899"]}
           />
         }

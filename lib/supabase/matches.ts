@@ -19,7 +19,7 @@ export interface UserProfile {
   updated_at: string;
 }
 
-interface ResponseObject {
+export interface ResponseObject {
   success: boolean;
   message: string;
   isMatch?: boolean;
