@@ -9,15 +9,14 @@ const InitialLayout = () => {
 
   const inAuthGroup = segments[0] === "(auth)";
 
-  // 🚨 Prevent redirects until auth state is known
-  if (!initialized) {
-    return null;
+  if (!initialized) return null;
+
+  if (!user && !inAuthGroup) {
+    return <Redirect href="/sign-in" />;
   }
 
   if (user && inAuthGroup) {
     return <Redirect href="/" />;
-  } else if (!user && !inAuthGroup) {
-    return <Redirect href="/sign-in" />;
   }
 
   return <Slot />;

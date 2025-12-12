@@ -1,5 +1,5 @@
 import { useAuth } from "@/lib/providers/auth-provider";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -11,12 +11,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { loading, signIn, error: signInError, user } = useAuth();
+
+  const { signIn, message, type } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -27,10 +28,12 @@ export default function SignInPage() {
   };
 
   useEffect(() => {
-    if (signInError) {
-      Alert.alert("Error", signInError);
+    if (type === "error" && message) {
+      Alert.alert("Error", message);
+    } else {
+      Toast.show({ type: "success", text1: "Success", text2: message });
     }
-  }, [signInError]);
+  }, [message, type]);
 
   const handleGoogleLogin = () => {
     console.log("Google login clicked");

@@ -11,7 +11,6 @@ import { supabase } from "../supabase/supabase";
 
 interface AuthContextType {
   user: User | null;
-  error: string | null;
   loading: boolean;
   isLoggedIn: boolean;
   success: boolean;
@@ -19,6 +18,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refetch: () => Promise<void>;
+  message: string;
+  type: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,7 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
-  const { loading, message, type, run } = useAsyncHandler();
+  const { loading, message, type, run, setMessage, setType } =
+    useAsyncHandler();
 
   const isLoggedIn = !!user;
 
@@ -61,15 +63,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-      if (error) throw error;
+
+      if (error) {
+        setType("error");
+        setMessage(error.message);
+        return;
+      }
+
+      setType("success");
+      setMessage("Signed in successfully!");
       setUser(data.user);
     });
 
   const signOut = () =>
     run(async () => {
-      await supabase.auth.signOut();
-      setInitialized(false);
-      setUser(null);
+      try {
+        await supabase.auth.signOut();
+        setType("success");
+        setMessage("Signed out successfully!");
+        setInitialized(false);
+        setUser(null);
+      } catch (error: any) {
+        setType("error");
+        setMessage(error.message);
+      }
     });
 
   const refetch = () =>
@@ -89,9 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         refetch,
         signIn,
-        error: type === "error" ? message : "",
         initialized,
         success,
+        type,
+        message,
       }}
     >
       {children}
