@@ -5,6 +5,7 @@ import { MatchNotification } from "@/components/match-notification";
 import {
   getPotentialMatches,
   likeUser,
+  passUser,
   UserProfile,
 } from "@/lib/supabase/matches";
 import { LinearGradient } from "expo-linear-gradient";
@@ -52,6 +53,10 @@ export default function Discover() {
       const likedUser = potentialMatches[currentIndex];
 
       try {
+        // Record the pass first to mark as "seen"
+        await passUser(likedUser.id);
+
+        // Process the like
         const result = await likeUser(likedUser.id);
 
         if (result.isMatch) {
@@ -61,15 +66,23 @@ export default function Discover() {
 
         setCurrentIndex((prev) => prev + 1);
       } catch (error: any) {
-        Alert.alert("Error", error.message);
+        setError(error.message);
         console.error(error);
       }
     }
   }
 
-  function handlePass() {
-    if (currentIndex < potentialMatches.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+  async function handlePass() {
+    if (currentIndex < potentialMatches.length) {
+      const passedUser = potentialMatches[currentIndex];
+
+      try {
+        await passUser(passedUser.id);
+        setCurrentIndex((prev) => prev + 1);
+      } catch (error: any) {
+        console.error(error);
+        setError(error.message);
+      }
     }
   }
 

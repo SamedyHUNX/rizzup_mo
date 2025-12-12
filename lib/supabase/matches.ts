@@ -14,7 +14,8 @@ export interface UserProfile {
   location_lng?: number;
   last_active: string;
   is_verified: boolean;
-  is_online: boolean;
+  is_online?: boolean;
+  is_visible?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -26,14 +27,31 @@ export async function getPotentialMatches(): Promise<UserProfile[]> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated.");
+    throw new Error("Not authenticated");
   }
 
-  // Get potential matches
+  // Get users the current user has already liked or passed
+  const { data: likedUsers } = await supabase
+    .from("likes")
+    .select("to_user_id")
+    .eq("from_user_id", user.id);
+
+  const { data: passedUsers } = await supabase
+    .from("passes")
+    .select("to_user_id")
+    .eq("from_user_id", user.id);
+
+  const excludedUserIds = [
+    user.id,
+    ...(likedUsers?.map((l) => l.to_user_id) || []),
+    ...(passedUsers?.map((p) => p.to_user_id) || []),
+  ];
+
+  // Get potential matches excluding already interacted users
   const { data: potentialMatches, error } = await supabase
     .from("users")
     .select("*")
-    .neq("id", user.id)
+    .not("id", "in", `(${excludedUserIds.join(",")})`)
     .limit(50);
 
   if (error) {
@@ -77,7 +95,7 @@ export async function getPotentialMatches(): Promise<UserProfile[]> {
         location_lng: undefined,
         last_active: new Date().toISOString(),
         is_verified: true,
-        is_online: false,
+        is_visible: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })) || [];
@@ -133,4 +151,48 @@ export async function likeUser(toUserId: string) {
   }
 
   return { success: true, isMatch: false };
+}
+
+// Handle passing
+export async function passUser(toUserId: string) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { error } = await supabase.from("passes").insert({
+    from_user_id: user.id,
+    to_user_id: toUserId,
+  });
+
+  if (error) {
+    throw new Error("Failed to record pass");
+  }
+
+  return { success: true };
+}
+
+// Reset passes
+export async function resetPasses() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Not authenticated.");
+  }
+
+  const { error } = await supabase
+    .from("passes")
+    .delete()
+    .eq("from_user_id", user.id);
+
+  if (error) {
+    throw new Error("Failed to reset passes");
+  }
+
+  return { success: true };
 }
