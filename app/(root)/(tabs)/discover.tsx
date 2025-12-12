@@ -22,13 +22,17 @@ export default function Discover() {
     showMatchNotification,
     setShowMatchNotification,
     setMatchedUser,
-    loadUsers,
     like,
     pass,
     reset,
+    loadUsers,
   } = useMatchFlow();
 
   const router = useRouter();
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   useEffect(() => {
     if (!message) return;

@@ -15,8 +15,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 export default function MatchesListPage() {
-  const { message, type, matches, loading } = useMatchedFlow();
+  const { message, type, matches, loading, get } = useMatchedFlow();
   const router = useRouter();
+
+  useEffect(() => {
+    get();
+  }, []);
 
   useEffect(() => {
     if (!message) return;
@@ -72,7 +76,7 @@ export default function MatchesListPage() {
                 <TouchableOpacity
                   key={key}
                   className="bg-white rounded-2xl p-6 mb-4 shadow-lg"
-                  onPress={() => router.push(`/chat/${match.id}`)}
+                  onPress={() => router.push(`/messages/${match.id}`)}
                   activeOpacity={0.7}
                 >
                   <View className="flex-row items-center">
