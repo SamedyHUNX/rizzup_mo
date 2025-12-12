@@ -5,7 +5,7 @@ import { isApiResponse } from "../guards/type-guard";
 
 export function useAsyncHandler() {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState<string | undefined>("");
   const [type, setType] = useState<"success" | "error" | "">("");
 
   async function run<T>(fn: () => Promise<T>): Promise<T | undefined> {

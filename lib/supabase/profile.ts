@@ -22,7 +22,7 @@ export async function getCurrentUserProfile() {
 
   return {
     success: true,
-    message: "Profile fetched successfully",
+    message: "Profile fetched successfully! 🎉",
     data: profileData,
   };
 }
@@ -33,7 +33,7 @@ export async function updateUserProfile(profileData: Partial<UserProfile>) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Not authenticated");
+    return { success: false, message: "Not authenticated" };
   }
 
   const { error } = await supabase
@@ -53,7 +53,7 @@ export async function updateUserProfile(profileData: Partial<UserProfile>) {
     return { success: false, error: error.message };
   }
 
-  return { success: true };
+  return { success: true, message: "Updated profile successfully! 🎉" };
 }
 
 export async function uploadProfilePhoto(formData: FormData) {

@@ -1,12 +1,9 @@
 import Loading from "@/components/loading";
-import {
-  getCurrentUserProfile,
-  updateUserProfile,
-} from "@/lib/supabase/profile";
+import { useProfileUpdateFlow } from "@/lib/hooks/use-update-profile-flow";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Alert,
   Image,
@@ -19,75 +16,29 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-export default function EditProfileScreen({ navigation }: { navigation: any }) {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [tempDate, setTempDate] = useState<Date>(new Date());
-
-  const [formData, setFormData] = useState({
-    full_name: "",
-    username: "",
-    bio: "",
-    gender: "male",
-    birthdate: "",
-    avatar_url: "",
-  });
+export default function EditProfileScreen() {
+  const {
+    loadProfile,
+    formSubmit,
+    inputChange,
+    dateChange,
+    dateConfirm,
+    dateCancel,
+    loading,
+    message,
+    type,
+    saving,
+    showDatePicker,
+    formData,
+    setShowDatePicker,
+    tempDate,
+  } = useProfileUpdateFlow();
 
   useEffect(() => {
     loadProfile();
   }, []);
-
-  async function loadProfile() {
-    try {
-      // Replace with your actual API call
-      const profileData = await getCurrentUserProfile();
-
-      if (profileData) {
-        setFormData({
-          full_name: profileData.full_name || "",
-          username: profileData.username || "",
-          bio: profileData.bio || "",
-          gender: profileData.gender || "male",
-          birthdate: profileData.birthdate || "",
-          avatar_url: profileData.avatar_url || "",
-        });
-      }
-    } catch (error: any) {
-      setError("Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleFormSubmit() {
-    setSaving(true);
-    setError("");
-
-    try {
-      // Replace with your actual API call
-      const result = await updateUserProfile(formData);
-
-      if (result.success) {
-        navigation.navigate("Profile");
-      } else {
-        setError(result.error || "Failed to update profile.");
-      }
-    } catch (err: any) {
-      setError("Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleInputChange(name: string, value: any) {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
 
   function handlePhotoUpload() {
     // Implement photo picker logic here
@@ -95,35 +46,15 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
     console.log("Open photo picker");
   }
 
-  function handleDateChange(event: any, selectedDate?: Date) {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-      if (selectedDate) {
-        const dateString = selectedDate.toISOString().split("T")[0];
-        handleInputChange("birthdate", dateString);
-      }
-    } else {
-      if (selectedDate) {
-        setTempDate(selectedDate);
-      }
-    }
-  }
-
-  function handleDateConfirm() {
-    const dateString = tempDate.toISOString().split("T")[0];
-    handleInputChange("birthdate", dateString);
-    setShowDatePicker(false);
-  }
-
-  function handleDateCancel() {
-    setShowDatePicker(false);
-  }
-
   useEffect(() => {
-    if (error) {
-      Alert.alert("Error", error);
+    if (!message) return;
+
+    if (type === "error") {
+      Alert.alert("Error", message);
+    } else if (type === "success") {
+      Toast.show({ type: "success", text1: "Success", text2: message });
     }
-  }, [error]);
+  }, [message, type]);
 
   if (loading) {
     return <Loading />;
@@ -189,7 +120,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
               <TextInput
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 text-base"
                 value={formData.full_name}
-                onChangeText={(value) => handleInputChange("full_name", value)}
+                onChangeText={(value) => inputChange("full_name", value)}
                 placeholder="Enter your full name"
                 placeholderTextColor="#9ca3af"
               />
@@ -203,7 +134,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
               <TextInput
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 text-base"
                 value={formData.username}
-                onChangeText={(value) => handleInputChange("username", value)}
+                onChangeText={(value) => inputChange("username", value)}
                 placeholder="Choose a username"
                 placeholderTextColor="#9ca3af"
                 autoCapitalize="none"
@@ -218,7 +149,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
               <View className="border border-gray-300 rounded-xl overflow-hidden bg-white">
                 <Picker
                   selectedValue={formData.gender}
-                  onValueChange={(value) => handleInputChange("gender", value)}
+                  onValueChange={(value) => inputChange("gender", value)}
                   style={{ height: 50 }}
                 >
                   <Picker.Item label="Male" value="male" />
@@ -244,7 +175,9 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                     formData.birthdate ? "text-gray-900" : "text-gray-400"
                   }`}
                 >
-                  {formData.birthdate || "Select your birthday"}
+                  {formData.birthdate
+                    ? new Date(formData.birthdate).toLocaleDateString()
+                    : "Select your birthday"}
                 </Text>
               </TouchableOpacity>
               {showDatePicker && Platform.OS === "android" && (
@@ -256,7 +189,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                   }
                   mode="date"
                   display="default"
-                  onChange={handleDateChange}
+                  onChange={dateChange}
                   maximumDate={new Date()}
                 />
               )}
@@ -270,7 +203,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
               <TextInput
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 text-base"
                 value={formData.bio}
-                onChangeText={(value) => handleInputChange("bio", value)}
+                onChangeText={(value) => inputChange("bio", value)}
                 placeholder="Tell others about yourself..."
                 placeholderTextColor="#9ca3af"
                 multiline
@@ -283,13 +216,6 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                 {formData.bio.length}/500 characters
               </Text>
             </View>
-
-            {/* Error Message */}
-            {error && (
-              <View className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <Text className="text-red-700 text-sm">{error}</Text>
-              </View>
-            )}
 
             {/* Buttons */}
             <View className="flex-row items-center justify-between pt-4 border-t border-gray-200 mt-2">
@@ -306,7 +232,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                 className={`px-8 py-3 rounded-xl ${
                   saving ? "bg-gray-400" : "bg-pink-500"
                 }`}
-                onPress={handleFormSubmit}
+                onPress={formSubmit}
                 disabled={saving}
                 activeOpacity={0.8}
               >
@@ -330,10 +256,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
             <View className="bg-white rounded-t-3xl">
               {/* Header with buttons */}
               <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-200">
-                <TouchableOpacity
-                  onPress={handleDateCancel}
-                  activeOpacity={0.7}
-                >
+                <TouchableOpacity onPress={dateCancel} activeOpacity={0.7}>
                   <Text className="text-pink-500 font-semibold text-base">
                     Cancel
                   </Text>
@@ -341,10 +264,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                 <Text className="text-gray-900 font-semibold text-base">
                   Select Birthday
                 </Text>
-                <TouchableOpacity
-                  onPress={handleDateConfirm}
-                  activeOpacity={0.7}
-                >
+                <TouchableOpacity onPress={dateConfirm} activeOpacity={0.7}>
                   <Text className="text-pink-500 font-semibold text-base">
                     Done
                   </Text>
@@ -356,7 +276,7 @@ export default function EditProfileScreen({ navigation }: { navigation: any }) {
                 value={tempDate}
                 mode="date"
                 display="spinner"
-                onChange={handleDateChange}
+                onChange={dateChange}
                 maximumDate={new Date()}
                 style={{ height: 200 }}
               />
