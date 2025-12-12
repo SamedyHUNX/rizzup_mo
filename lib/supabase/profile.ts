@@ -1,4 +1,4 @@
-import { UserProfile } from "./matches";
+import { UserProfile } from "@/types/users.type";
 import { supabase } from "./supabase";
 
 export async function getCurrentUserProfile() {
