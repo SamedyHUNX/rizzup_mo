@@ -35,7 +35,9 @@ export default function Discover() {
   }, []);
 
   useEffect(() => {
-    if (type === "error" && message) {
+    if (!message) return;
+
+    if (type === "error") {
       Alert.alert("Error", message);
     } else if (type === "success") {
       Toast.show({ type: "success", text1: "Success", text2: message });

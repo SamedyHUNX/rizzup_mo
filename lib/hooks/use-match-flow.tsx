@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   getPotentialMatches,
   likeUser,
@@ -14,17 +14,25 @@ export function useMatchFlow() {
   const [matchedUser, setMatchedUser] = useState<UserProfile | null>(null);
   const [showMatchNotification, setShowMatchNotification] = useState(false);
 
-  const { loading, message, type, run } = useAsyncHandler();
+  const { loading, message, type, run, setMessage, setType } =
+    useAsyncHandler();
 
-  const loadUsers = () =>
-    run(async () => {
-      const res = await getPotentialMatches();
-      if (res.success && res.data) {
-        setPotentialMatches(res.data);
-        setCurrentIndex(0);
-      }
-      return res;
-    });
+  const loadUsers = useCallback(
+    () =>
+      run(async () => {
+        const { success, message, data } = await getPotentialMatches();
+        if (success && data) {
+          setPotentialMatches(data);
+          setCurrentIndex(0);
+          return;
+        }
+
+        // Only show error
+        setType("error");
+        setMessage(message);
+      }),
+    [run, setMessage, setType]
+  );
 
   const like = () =>
     run(async () => {
