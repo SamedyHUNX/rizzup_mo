@@ -1,0 +1,38 @@
+diff --git a/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.h b/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.h
+index 3ff079e..6283d1f 100644
+--- a/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.h
++++ b/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.h
+@@ -1,9 +1,10 @@
+ #import <AVFoundation/AVFoundation.h>
+ #import <Foundation/Foundation.h>
+ 
+-#import <React/RCTBridgeModule.h>
+-#import <React/RCTConvert.h>
+-#import <React/RCTEventEmitter.h>
++#import "RCTBridgeModule.h"
++#import "RCTConvert.h"
++#import "RCTEventEmitter.h"
++
+ 
+ #import <WebRTC/WebRTC.h>
+ 
+diff --git a/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.m b/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.m
+index bef9e5c..c58f4b5 100644
+--- a/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.m
++++ b/node_modules/@stream-io/react-native-webrtc/ios/RCTWebRTC/WebRTCModule.m
+@@ -2,10 +2,11 @@
+ #import <UIKit/UIKit.h>
+ #endif
+ 
+-#import <React/RCTBridge.h>
+-#import <React/RCTEventDispatcher.h>
+-#import <React/RCTLog.h>
+-#import <React/RCTUtils.h>
++#import "RCTBridge.h"
++#import "RCTEventDispatcher.h"
++#import "RCTLog.h"
++#import "RCTUtils.h"
++
+ 
+ #import "WebRTCModule+RTCPeerConnection.h"
+ #import "WebRTCModule.h"

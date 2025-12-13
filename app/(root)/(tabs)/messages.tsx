@@ -32,7 +32,11 @@ export default function MessagesScreen() {
       try {
         setError("");
         const { data: userMatches } = await getUserMatches();
-        const chatData: ChatData[] = userMatches!.map((match) => ({
+        if (!userMatches) {
+          setChats([]);
+          return;
+        }
+        const chatData: ChatData[] = userMatches.map((match) => ({
           id: match.id,
           user: match,
           lastMessage: "Start your conversation!",
@@ -86,7 +90,10 @@ export default function MessagesScreen() {
   );
 
   const renderChatItem = ({ item: chat }: { item: ChatData }) => (
-    <Link href={{ pathname: "/chat", params: { userId: chat.user.id } }} asChild>
+    <Link
+      href={{ pathname: "/chat", params: { userId: chat.user.id } }}
+      asChild
+    >
       <TouchableOpacity
         className="flex-row items-center p-6 border-b border-gray-200 dark:border-gray-700 active:bg-gray-50 dark:active:bg-gray-700"
         activeOpacity={0.7}
