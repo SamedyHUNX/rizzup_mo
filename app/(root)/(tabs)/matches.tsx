@@ -76,7 +76,13 @@ export default function MatchesListPage() {
                 <TouchableOpacity
                   key={key}
                   className="bg-white rounded-2xl p-6 mb-4 shadow-lg"
-                  onPress={() => router.push({ pathname: "/chat", params: { userId: match.id } })}
+                  onPress={() => router.push({
+                    pathname: "/chat",
+                    params: {
+                      userId: match.id,
+                      userData: JSON.stringify(match)
+                    }
+                  })}
                   activeOpacity={0.7}
                 >
                   <View className="flex-row items-center">

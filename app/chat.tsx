@@ -12,9 +12,8 @@ import Toast from "react-native-toast-message";
 
 export default function ChatDetail() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
-  const [notFound, setNotFound] = useState(false);
 
-  const params = useLocalSearchParams<{ userId?: string }>();
+  const params = useLocalSearchParams<{ userId?: string; userData?: string }>();
   const { user } = useAuth();
   const userId = params.userId as string;
 
@@ -22,13 +21,24 @@ export default function ChatDetail() {
 
   const { get, loading, message, type, matches } = useMatchedFlow();
 
+  // Try to use userData from params first (avoids API call)
   useEffect(() => {
-    if (user) {
+    if (params.userData) {
+      try {
+        const userData = JSON.parse(params.userData);
+        setOtherUser(userData);
+      } catch (e) {
+        console.error("Failed to parse userData:", e);
+      }
+    } else if (user) {
+      // Fallback: fetch matches if userData wasn't passed
       get();
     }
-  }, [user]);
+  }, [user, params.userData]);
 
+  // Only run this if otherUser is not set yet (from params)
   useEffect(() => {
+    if (otherUser) return; // Already set from params
     if (loading) return;
 
     if (matches.length === 0) {
@@ -38,9 +48,7 @@ export default function ChatDetail() {
     const matchedUser = matches.find((match) => match.id === userId);
     if (matchedUser) {
       setOtherUser(matchedUser);
-      setNotFound(false);
     } else {
-      setNotFound(true);
       const timer = setTimeout(() => {
         if (router.canGoBack()) {
           router.back();
@@ -50,7 +58,7 @@ export default function ChatDetail() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [matches, loading, userId]);
+  }, [matches, loading, userId, otherUser]);
 
   useEffect(() => {
     if (!message) return;
@@ -62,11 +70,14 @@ export default function ChatDetail() {
     }
   }, [message, type]);
 
-  if (loading) {
-    return <Loading message="Loading your matches..." />;
+  // Show loading while we're fetching OR while we're parsing userData from params
+  if (loading || (!otherUser && !params.userData)) {
+    return <Loading message="Loading messages..." />;
   }
 
-  if (notFound) {
+  // Only show "not found" if we have no otherUser AND we've finished trying to load
+  if (!otherUser && params.userData) {
+    // Failed to parse userData
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
         <View className="flex-1 items-center justify-center px-8">
@@ -97,7 +108,8 @@ export default function ChatDetail() {
   }
 
   if (!otherUser) {
-    return null;
+    // Still loading from API call
+    return <Loading message="Loading messages..." />;
   }
 
   return (
