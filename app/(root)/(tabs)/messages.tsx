@@ -2,7 +2,7 @@ import Loading from "@/components/loading";
 import { formatTime } from "@/lib/helpers/format-time";
 import { getUserMatches } from "@/lib/supabase/matches";
 import { UserProfile } from "@/types/users.type";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -22,11 +22,10 @@ export interface ChatData {
   unreadCount: number;
 }
 
-export default function ChatPage() {
+export default function MessagesScreen() {
   const [chats, setChats] = useState<ChatData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const router = useRouter();
 
   useEffect(() => {
     async function loadMatches() {
@@ -59,7 +58,7 @@ export default function ChatPage() {
   }, [error]);
 
   if (loading) {
-    return <Loading message="Loading your matches..." />;
+    return <Loading message="Loading your messages..." />;
   }
 
   const renderEmptyState = () => (

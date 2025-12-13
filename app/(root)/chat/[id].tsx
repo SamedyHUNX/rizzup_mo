@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function MessageChatDetail() {
+export default function MessageDetail() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -34,7 +34,7 @@ export default function MessageChatDetail() {
         if (matchedUser) {
           setOtherUser(matchedUser);
         } else {
-          router.push("/chat");
+          router.push("/messages");
         }
       } catch (error: any) {
         setError(error.message);
@@ -75,7 +75,7 @@ export default function MessageChatDetail() {
               permission to chat with them.
             </Text>
             <TouchableOpacity
-              onPress={() => router.push("/chat")}
+              onPress={() => router.push("/messages")}
               className="bg-pink-500 py-3 px-6 rounded-full"
               activeOpacity={0.8}
             >
