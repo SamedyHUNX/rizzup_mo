@@ -11,9 +11,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 export default function ChatDetail() {
-  const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
-
   const params = useLocalSearchParams<{ userId?: string; userData?: string }>();
+  const [otherUser, setOtherUser] = useState<UserProfile | null>(() => {
+    if (params.userData) {
+      try {
+        return JSON.parse(params.userData);
+      } catch (e) {
+        console.error("Failed to parse userData:", e);
+      }
+    }
+    return null;
+  });
   const { user } = useAuth();
   const userId = params.userId as string;
 
@@ -21,20 +29,12 @@ export default function ChatDetail() {
 
   const { get, loading, message, type, matches } = useMatchedFlow();
 
-  // Try to use userData from params first (avoids API call)
+  // Fetch matches only if we don't have user data from params
   useEffect(() => {
-    if (params.userData) {
-      try {
-        const userData = JSON.parse(params.userData);
-        setOtherUser(userData);
-      } catch (e) {
-        console.error("Failed to parse userData:", e);
-      }
-    } else if (user) {
-      // Fallback: fetch matches if userData wasn't passed
+    if (!otherUser && !params.userData && user) {
       get();
     }
-  }, [user, params.userData]);
+  }, [user, params.userData, otherUser]);
 
   // Only run this if otherUser is not set yet (from params)
   useEffect(() => {
@@ -71,8 +71,8 @@ export default function ChatDetail() {
   }, [message, type]);
 
   // Show loading while we're fetching OR while we're parsing userData from params
-  if (loading || (!otherUser && !params.userData)) {
-    return <Loading message="Loading messages..." />;
+  if (loading || (!otherUser && !params.userData) || !otherUser) {
+    return <Loading message="Setting up chat..." />;
   }
 
   // Only show "not found" if we have no otherUser AND we've finished trying to load
@@ -105,11 +105,6 @@ export default function ChatDetail() {
         </View>
       </SafeAreaView>
     );
-  }
-
-  if (!otherUser) {
-    // Still loading from API call
-    return <Loading message="Loading messages..." />;
   }
 
   return (
