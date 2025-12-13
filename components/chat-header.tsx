@@ -6,11 +6,15 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 interface ChatHeaderProps {
-  user: UserProfile;
+  user: UserProfile | null;
   onVideoCall: () => void;
 }
 
 export default function ChatHeader({ user, onVideoCall }: ChatHeaderProps) {
+  if (!user) {
+    return;
+  }
+
   return (
     <View className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <View className="flex-row items-center justify-between">

@@ -12,6 +12,7 @@ import Toast from "react-native-toast-message";
 
 export default function ChatDetail() {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   const params = useLocalSearchParams<{ userId?: string }>();
   const { user } = useAuth();
@@ -37,7 +38,9 @@ export default function ChatDetail() {
     const matchedUser = matches.find((match) => match.id === userId);
     if (matchedUser) {
       setOtherUser(matchedUser);
+      setNotFound(false);
     } else {
+      setNotFound(true);
       const timer = setTimeout(() => {
         if (router.canGoBack()) {
           router.back();
@@ -63,7 +66,7 @@ export default function ChatDetail() {
     return <Loading message="Loading your matches..." />;
   }
 
-  if (!otherUser) {
+  if (notFound) {
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
         <View className="flex-1 items-center justify-center px-8">
@@ -91,6 +94,10 @@ export default function ChatDetail() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (!otherUser) {
+    return null;
   }
 
   return (

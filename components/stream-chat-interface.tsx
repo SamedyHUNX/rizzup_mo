@@ -1,3 +1,8 @@
+import {
+  createOrGetChannel,
+  createVideoCall,
+  getStreamUserToken,
+} from "@/lib/get-stream-io/stream";
 import { UserProfile } from "@/types/users.type";
 import { useRouter } from "expo-router";
 import React, {
@@ -21,6 +26,7 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { Channel, Event, StreamChat } from "stream-chat";
+import VideoCall from "./video-call";
 
 interface Message {
   id: string;
@@ -438,27 +444,3 @@ export default function StreamChatInterface({
     </KeyboardAvoidingView>
   );
 }
-
-// Note: You'll need to implement these helper functions
-declare function getStreamUserToken(): Promise<{
-  token: string;
-  userId: string;
-  userName: string;
-  userImage: string;
-}>;
-
-declare function createOrGetChannel(otherUserId: string): Promise<{
-  channelType: string;
-  channelId: string;
-}>;
-
-declare function createVideoCall(otherUserId: string): Promise<{
-  callId: string;
-}>;
-
-// Video Call component placeholder
-declare const VideoCall: React.FC<{
-  onCallEnd: () => void;
-  callId: string;
-  isIncoming: boolean;
-}>;
