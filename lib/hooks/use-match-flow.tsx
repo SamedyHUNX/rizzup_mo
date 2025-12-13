@@ -1,10 +1,10 @@
+import { UserProfile } from "@/types/users.type";
 import { useCallback, useState } from "react";
 import {
   getPotentialMatches,
   likeUser,
   passUser,
   resetPasses,
-  UserProfile,
 } from "../supabase/matches";
 import { useAsyncHandler } from "./use-async-handler";
 

@@ -86,7 +86,7 @@ export default function MessagesScreen() {
   );
 
   const renderChatItem = ({ item: chat }: { item: ChatData }) => (
-    <Link href={`/chat/${chat.id}`} asChild>
+    <Link href={{ pathname: "/chat", params: { userId: chat.user.id } }} asChild>
       <TouchableOpacity
         className="flex-row items-center p-6 border-b border-gray-200 dark:border-gray-700 active:bg-gray-50 dark:active:bg-gray-700"
         activeOpacity={0.7}

@@ -1,6 +1,6 @@
 import { AuthProvider, useAuth } from "@/lib/providers/auth-provider";
 import { GlobalLoadingProvider } from "@/lib/providers/global-loading";
-import { Redirect, Slot, useSegments } from "expo-router";
+import { Redirect, Stack, useSegments } from "expo-router";
 import "./global.css";
 
 const InitialLayout = () => {
@@ -19,7 +19,13 @@ const InitialLayout = () => {
     return <Redirect href="/" />;
   }
 
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(root)" />
+      <Stack.Screen name="chat" options={{ presentation: "card" }} />
+      <Stack.Screen name="profile/edit" />
+    </Stack>
+  );
 };
 
 export default function RootLayout() {
