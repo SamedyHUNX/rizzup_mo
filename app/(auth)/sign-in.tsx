@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -30,8 +29,6 @@ export default function SignInPage() {
   useEffect(() => {
     if (type === "error" && message) {
       Alert.alert("Error", message);
-    } else {
-      Toast.show({ type: "success", text1: "Success", text2: message });
     }
   }, [message, type]);
 
@@ -46,7 +43,7 @@ export default function SignInPage() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header Image/Logo */}
-        <View className="items-center pt-12 pb-8">
+        <View className="items-center pt-24 pb-8">
           <View className="w-32 h-32 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 items-center justify-center mb-6">
             <Text className="text-6xl">💕</Text>
           </View>
