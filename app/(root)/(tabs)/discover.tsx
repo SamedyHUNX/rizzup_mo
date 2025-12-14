@@ -4,7 +4,7 @@ import MatchCard from "@/components/match-card";
 import { MatchNotification } from "@/components/match-notification";
 import { useMatchFlow } from "@/lib/hooks/use-match-flow";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { useEffect } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,8 +27,6 @@ export default function Discover() {
     reset,
     loadUsers,
   } = useMatchFlow();
-
-  const router = useRouter();
 
   useEffect(() => {
     loadUsers();

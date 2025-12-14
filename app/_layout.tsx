@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from "@/lib/providers/auth-provider";
 import { GlobalLoadingProvider } from "@/lib/providers/global-loading";
-import { Redirect, Stack, useSegments } from "expo-router";
+import { router, Stack, useSegments } from "expo-router";
+import Toast from "react-native-toast-message";
 import "./global.css";
 
 const InitialLayout = () => {
@@ -12,11 +13,11 @@ const InitialLayout = () => {
   if (!initialized) return null;
 
   if (!user && !inAuthGroup) {
-    return <Redirect href="/sign-in" />;
+    router.push("/sign-in");
   }
 
   if (user && inAuthGroup) {
-    return <Redirect href="/" />;
+    router.push("/");
   }
 
   return (
@@ -33,6 +34,7 @@ export default function RootLayout() {
     <AuthProvider>
       <GlobalLoadingProvider>
         <InitialLayout />
+        <Toast topOffset={80} />
       </GlobalLoadingProvider>
     </AuthProvider>
   );

@@ -162,6 +162,19 @@ export async function initStreamChat(
   }
 }
 
+// Ensure Stream Chat is connected, reusing existing connection if possible
+export async function ensureStreamChatConnected(
+  userId: string,
+  token: string,
+  userName: string,
+  userImage: string
+) {
+  if (chatClient && chatClient.userID === userId) {
+    return chatClient;
+  }
+  return initStreamChat(userId, token, userName, userImage);
+}
+
 // Get the current chat client instance
 export function getChatClient() {
   return chatClient;
@@ -254,7 +267,7 @@ export function setupMessageListener(
     if (!chatClient) {
       console.warn("Chat client not initialized for message listener");
       // Return empty cleanup function instead of null
-      return () => {};
+      return () => { };
     }
 
     // Listen for new messages

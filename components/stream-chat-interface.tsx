@@ -1,6 +1,7 @@
 import {
   createOrGetChannel,
   createVideoCall,
+  ensureStreamChatConnected,
   getStreamUserToken,
 } from "@/lib/get-stream-io/stream";
 import { UserProfile } from "@/types/users.type";
@@ -106,24 +107,15 @@ export default function StreamChatInterface({
 
         // Step 2: Initialize Stream client
         console.log("Initializing Stream client...");
-        chatClient = StreamChat.getInstance(
-          process.env.EXPO_PUBLIC_STREAM_API_KEY!
-        );
-
-        // Step 3: Connect user
-        console.log("Connecting user to Stream...");
-        await chatClient.connectUser(
-          {
-            id: userId,
-            name: userName,
-            image: userImage,
-          },
-          token
+        chatClient = await ensureStreamChatConnected(
+          userId,
+          token,
+          userName,
+          userImage
         );
         console.log("User connected successfully");
 
         if (!isMounted) {
-          await chatClient.disconnectUser();
           return;
         }
 
@@ -147,7 +139,6 @@ export default function StreamChatInterface({
         console.log("Channel watched successfully");
 
         if (!isMounted) {
-          await chatClient.disconnectUser();
           return;
         }
 
@@ -165,7 +156,6 @@ export default function StreamChatInterface({
         }));
 
         if (!isMounted) {
-          await chatClient.disconnectUser();
           return;
         }
 
@@ -220,7 +210,6 @@ export default function StreamChatInterface({
         });
 
         if (!isMounted) {
-          await chatClient.disconnectUser();
           return;
         }
 
@@ -246,13 +235,9 @@ export default function StreamChatInterface({
         }
 
         // Clean up client if it was created
-        if (chatClient) {
-          try {
-            await chatClient.disconnectUser();
-          } catch (disconnectError) {
-            console.error("Error disconnecting client:", disconnectError);
-          }
-        }
+        // We don't disconnect here because it might be used by other components
+        // Only disconnect if we specifically want to kill the session
+        console.warn("Error in chat initialization, but keeping client alive if possible");
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -266,11 +251,9 @@ export default function StreamChatInterface({
 
     return () => {
       isMounted = false;
-      if (chatClient) {
-        chatClient.disconnectUser().catch(console.error);
-      }
+      // Do NOT disconnect client here as it's shared
     };
-  }, [otherUser?.id]); // Added dependency
+  }, [otherUser?.id]);
 
   async function handleVideoCall() {
     try {
@@ -412,32 +395,28 @@ export default function StreamChatInterface({
         {messages.map((message, key) => (
           <View
             key={key}
-            className={`mb-4 ${
-              message.sender === "me" ? "items-end" : "items-start"
-            }`}
+            className={`mb-4 ${message.sender === "me" ? "items-end" : "items-start"
+              }`}
           >
             <View
-              className={`max-w-[75%] px-4 py-2 rounded-2xl ${
-                message.sender === "me"
-                  ? "bg-pink-500"
-                  : "bg-gray-200 dark:bg-gray-700"
-              }`}
+              className={`max-w-[75%] px-4 py-2 rounded-2xl ${message.sender === "me"
+                ? "bg-pink-500"
+                : "bg-gray-200 dark:bg-gray-700"
+                }`}
             >
               <Text
-                className={`text-sm ${
-                  message.sender === "me"
-                    ? "text-white"
-                    : "text-gray-900 dark:text-white"
-                }`}
+                className={`text-sm ${message.sender === "me"
+                  ? "text-white"
+                  : "text-gray-900 dark:text-white"
+                  }`}
               >
                 {message.text}
               </Text>
               <Text
-                className={`text-xs mt-1 ${
-                  message.sender === "me"
-                    ? "text-pink-100"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
+                className={`text-xs mt-1 ${message.sender === "me"
+                  ? "text-pink-100"
+                  : "text-gray-500 dark:text-gray-400"
+                  }`}
               >
                 {formatTime(message.timestamp)}
               </Text>
@@ -484,9 +463,8 @@ export default function StreamChatInterface({
           <TouchableOpacity
             onPress={handleSendMessage}
             disabled={!newMessage.trim() || !channel}
-            className={`px-6 py-2 bg-pink-500 rounded-full ${
-              !newMessage.trim() || !channel ? "opacity-50" : ""
-            }`}
+            className={`px-6 py-2 bg-pink-500 rounded-full ${!newMessage.trim() || !channel ? "opacity-50" : ""
+              }`}
             activeOpacity={0.7}
           >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
