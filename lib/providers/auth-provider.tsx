@@ -23,7 +23,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refetch: () => Promise<void>;
-  message: string;
+  message: string | undefined;
   type: string;
 }
 
@@ -107,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
         setType("success");
         setMessage("Signed out successfully!");
-        setInitialized(false);
         setUser(null);
       } catch (error: any) {
         setType("error");

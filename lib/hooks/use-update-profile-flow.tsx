@@ -1,8 +1,11 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Platform } from "react-native";
+import {
+  getCurrentUserProfile,
+  updateUserProfile,
+} from "../supabase/functions/profile";
 import { useAsyncHandler } from "./use-async-handler";
-import { getCurrentUserProfile, updateUserProfile } from "../supabase/functions/profile";
 
 export function useProfileUpdateFlow() {
   const [saving, setSaving] = useState<boolean>(false);
@@ -17,46 +20,37 @@ export function useProfileUpdateFlow() {
     avatar_url: "",
   });
 
-  const { loading, message, type, run, setType, setMessage } =
-    useAsyncHandler();
+  const { loading, message, type, run } = useAsyncHandler();
 
-  const loadProfile = () =>
-    run(async () => {
-      setMessage("");
-      const { success, data, message } = await getCurrentUserProfile();
-      if (success && data) {
-        setType("success");
-        setMessage(message);
-        setFormData({
-          full_name: data.full_name || "",
-          username: data.username || "",
-          bio: data.bio || "",
-          gender: data.gender || "male",
-          birthdate: data.birthdate || "",
-          avatar_url: data.avatar_url || "",
-        });
-        return;
-      }
-
-      setType("error");
-      setMessage(message);
-    });
+  const loadProfile = useCallback(
+    () =>
+      run(async () => {
+        const { success, data } = await getCurrentUserProfile();
+        if (success && data) {
+          setFormData({
+            full_name: data.full_name || "",
+            username: data.username || "",
+            bio: data.bio || "",
+            gender: data.gender || "male",
+            birthdate: data.birthdate || "",
+            avatar_url: data.avatar_url || "",
+          });
+        }
+      }),
+    [run]
+  );
 
   const formSubmit = () => {
     run(async () => {
       try {
         setSaving(true);
-        setMessage("");
         const { success, message } = await updateUserProfile(formData);
-        if (success && message) {
-          setType("success");
-          setMessage(message);
+
+        if (success) {
           // Navigate back after a short delay
           setTimeout(() => router.push("/profile"), 1500);
-          return;
         }
-        setType("error");
-        setMessage(message);
+        // run() already handles setMessage and setType
       } finally {
         setSaving(false);
       }

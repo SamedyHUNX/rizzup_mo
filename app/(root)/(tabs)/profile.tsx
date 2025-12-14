@@ -14,7 +14,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
 
 export default function ProfilePage() {
   const {
@@ -37,8 +36,6 @@ export default function ProfilePage() {
 
     if (type === "error") {
       Alert.alert("Error", message);
-    } else if (type === "success") {
-      Toast.show({ type: "success", text1: "Success", text2: message });
     }
   }, [message, type]);
 
