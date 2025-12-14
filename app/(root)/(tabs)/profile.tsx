@@ -222,15 +222,15 @@ export default function ProfilePage() {
           {/* Sign Out Button */}
           <TouchableOpacity
             onPress={handleSignOut}
-            className="w-full rounded-md h-[100px] overflow-hidden active:opacity-80"
+            className="w-full rounded-xl overflow-hidden active:opacity-80"
           >
             <LinearGradient
               colors={["#ef4444", "#dc2626"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="py-16 px-6 flex-row items-center justify-center"
+              className="py-4 px-2 flex-row items-center justify-center"
             >
-              <Text className="text-white font-semibold text-base text-center">
+              <Text className="text-white font-semibold text-base text-center py-2">
                 Sign Out
               </Text>
             </LinearGradient>
