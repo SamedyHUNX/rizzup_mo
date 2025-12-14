@@ -82,35 +82,79 @@ export default function StreamChatInterface({
     setCallerName("");
     setIsCallInitiator(false);
 
+    let isMounted = true;
+    let chatClient: StreamChat | null = null;
+
     async function initializeChat() {
       try {
         setError(null);
+        console.log("Starting chat initialization...");
 
-        const { token, userId, userName, userImage } =
-          await getStreamUserToken();
-        setCurrentUserId(userId!);
+        // Step 1: Get Stream token
+        console.log("Getting Stream user token...");
+        const tokenResponse = await getStreamUserToken();
 
-        const chatClient = StreamChat.getInstance(
+        if (!tokenResponse.token || !tokenResponse.userId) {
+          throw new Error("Failed to get Stream token");
+        }
+
+        const { token, userId, userName, userImage } = tokenResponse;
+
+        if (!isMounted) return;
+        setCurrentUserId(userId);
+        console.log("Got user token for:", userId);
+
+        // Step 2: Initialize Stream client
+        console.log("Initializing Stream client...");
+        chatClient = StreamChat.getInstance(
           process.env.EXPO_PUBLIC_STREAM_API_KEY!
         );
 
+        // Step 3: Connect user
+        console.log("Connecting user to Stream...");
         await chatClient.connectUser(
           {
-            id: userId!,
+            id: userId,
             name: userName,
             image: userImage,
           },
           token
         );
+        console.log("User connected successfully");
 
-        const { channelType, channelId } = await createOrGetChannel(
-          otherUser.id
-        );
+        if (!isMounted) {
+          await chatClient.disconnectUser();
+          return;
+        }
 
-        const chatChannel = chatClient.channel(channelType!, channelId);
+        // Step 4: Create or get channel
+        console.log("Creating/getting channel...");
+        const channelResponse = await createOrGetChannel(otherUser.id);
+
+        if (!channelResponse.channelType || !channelResponse.channelId) {
+          throw new Error(
+            channelResponse.message || "Failed to create channel"
+          );
+        }
+
+        const { channelType, channelId } = channelResponse;
+        console.log("Got channel:", channelId);
+
+        // Step 5: Watch channel
+        console.log("Watching channel...");
+        const chatChannel = chatClient.channel(channelType, channelId);
         await chatChannel.watch();
+        console.log("Channel watched successfully");
 
+        if (!isMounted) {
+          await chatClient.disconnectUser();
+          return;
+        }
+
+        // Step 6: Query messages
+        console.log("Querying messages...");
         const state = await chatChannel.query({ messages: { limit: 50 } });
+        console.log(`Loaded ${state.messages.length} messages`);
 
         const convertedMessages: Message[] = state.messages.map((msg) => ({
           id: msg.id,
@@ -120,7 +164,15 @@ export default function StreamChatInterface({
           user_id: msg.user?.id || "",
         }));
 
+        if (!isMounted) {
+          await chatClient.disconnectUser();
+          return;
+        }
+
         setMessages(convertedMessages);
+
+        // Step 7: Set up event listeners
+        console.log("Setting up event listeners...");
 
         chatChannel.on("message.new", (event: Event) => {
           if (event.message) {
@@ -167,12 +219,44 @@ export default function StreamChatInterface({
           }
         });
 
+        if (!isMounted) {
+          await chatClient.disconnectUser();
+          return;
+        }
+
         setClient(chatClient);
         setChannel(chatChannel);
+        console.log("Chat initialization complete!");
       } catch (error) {
-        router.push("/chat");
+        console.error("Error initializing chat:", error);
+
+        if (isMounted) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to initialize chat";
+          setError(errorMessage);
+
+          // Only redirect after a delay to show error
+          setTimeout(() => {
+            if (isMounted) {
+              router.push("/chat");
+            }
+          }, 2000);
+        }
+
+        // Clean up client if it was created
+        if (chatClient) {
+          try {
+            await chatClient.disconnectUser();
+          } catch (disconnectError) {
+            console.error("Error disconnecting client:", disconnectError);
+          }
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -181,16 +265,23 @@ export default function StreamChatInterface({
     }
 
     return () => {
-      if (client) {
-        client.disconnectUser();
+      isMounted = false;
+      if (chatClient) {
+        chatClient.disconnectUser().catch(console.error);
       }
     };
-  }, [otherUser]);
+  }, [otherUser?.id]); // Added dependency
 
   async function handleVideoCall() {
     try {
-      const { callId } = await createVideoCall(otherUser.id);
-      setVideoCallId(callId!);
+      const response = await createVideoCall(otherUser.id);
+
+      if (!response.callId) {
+        throw new Error(response.message || "Failed to create video call");
+      }
+
+      const { callId } = response;
+      setVideoCallId(callId);
       setShowVideoCall(true);
       setIsCallInitiator(true);
 
@@ -205,7 +296,8 @@ export default function StreamChatInterface({
         await channel.sendMessage(messageData);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error creating video call:", error);
+      alert("Failed to start video call");
     }
   }
 
@@ -239,6 +331,7 @@ export default function StreamChatInterface({
         setNewMessage("");
       } catch (error) {
         console.error("Error sending message:", error);
+        alert("Failed to send message");
       }
     }
   }
@@ -270,7 +363,27 @@ export default function StreamChatInterface({
     return date.toLocaleDateString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  if (!client || !channel) {
+  // Show error state
+  if (error) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900 px-4">
+        <View className="items-center">
+          <Text className="text-xl font-semibold text-red-500 mb-2">
+            Chat Error
+          </Text>
+          <Text className="text-gray-600 dark:text-gray-400 text-center mb-4">
+            {error}
+          </Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-500">
+            Redirecting...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Show loading state
+  if (loading || !client || !channel) {
     return (
       <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
         <View className="items-center">

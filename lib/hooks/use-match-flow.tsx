@@ -5,7 +5,7 @@ import {
   likeUser,
   passUser,
   resetPasses,
-} from "../supabase/matches";
+} from "../supabase/functions/matches";
 import { useAsyncHandler } from "./use-async-handler";
 
 export function useMatchFlow() {

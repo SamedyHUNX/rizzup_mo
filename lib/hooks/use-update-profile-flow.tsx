@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { Platform } from "react-native";
-import { getCurrentUserProfile, updateUserProfile } from "../supabase/profile";
 import { useAsyncHandler } from "./use-async-handler";
+import { getCurrentUserProfile, updateUserProfile } from "../supabase/functions/profile";
 
 export function useProfileUpdateFlow() {
   const [saving, setSaving] = useState<boolean>(false);

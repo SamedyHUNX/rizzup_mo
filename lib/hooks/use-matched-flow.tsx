@@ -1,6 +1,6 @@
 import { UserProfile } from "@/types/users.type";
 import { useCallback, useState } from "react";
-import { getUserMatches } from "../supabase/matches";
+import { getUserMatches } from "../supabase/functions/matches";
 import { useAsyncHandler } from "./use-async-handler";
 
 export function useMatchedFlow() {

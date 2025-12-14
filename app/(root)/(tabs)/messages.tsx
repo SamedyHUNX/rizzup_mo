@@ -1,6 +1,6 @@
 import Loading from "@/components/loading";
 import { formatTime } from "@/lib/helpers/format-time";
-import { getUserMatches } from "@/lib/supabase/matches";
+import { getUserMatches } from "@/lib/supabase/functions/matches";
 import { UserProfile } from "@/types/users.type";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";

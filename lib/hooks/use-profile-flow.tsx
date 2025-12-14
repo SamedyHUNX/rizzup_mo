@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../providers/auth-provider";
-import { UserProfile } from "../supabase/matches";
-import { getCurrentUserProfile } from "../supabase/profile";
 import { useAsyncHandler } from "./use-async-handler";
+import { UserProfile } from "@/types/users.type";
+import { getCurrentUserProfile } from "../supabase/functions/profile";
 
 export function useProfileFlow() {
   const [profile, setProfile] = useState<UserProfile>();

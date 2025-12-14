@@ -75,9 +75,7 @@ export default function ChatDetail() {
     return <Loading message="Setting up chat..." />;
   }
 
-  // Only show "not found" if we have no otherUser AND we've finished trying to load
   if (!otherUser && params.userData) {
-    // Failed to parse userData
     return (
       <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
         <View className="flex-1 items-center justify-center px-8">
