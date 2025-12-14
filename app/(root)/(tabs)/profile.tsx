@@ -40,7 +40,6 @@ export default function ProfilePage() {
   }, [message, type]);
 
   const handleEditProfile = () => {
-    // Navigate to Edit Profile Screen
     router.push("/profile/edit");
   };
 

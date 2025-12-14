@@ -237,7 +237,9 @@ export default function StreamChatInterface({
         // Clean up client if it was created
         // We don't disconnect here because it might be used by other components
         // Only disconnect if we specifically want to kill the session
-        console.warn("Error in chat initialization, but keeping client alive if possible");
+        console.warn(
+          "Error in chat initialization, but keeping client alive if possible"
+        );
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -395,28 +397,32 @@ export default function StreamChatInterface({
         {messages.map((message, key) => (
           <View
             key={key}
-            className={`mb-4 ${message.sender === "me" ? "items-end" : "items-start"
-              }`}
+            className={`mb-4 ${
+              message.sender === "me" ? "items-end" : "items-start"
+            }`}
           >
             <View
-              className={`max-w-[75%] px-4 py-2 rounded-2xl ${message.sender === "me"
-                ? "bg-pink-500"
-                : "bg-gray-200 dark:bg-gray-700"
-                }`}
+              className={`max-w-[75%] px-4 py-2 rounded-2xl ${
+                message.sender === "me"
+                  ? "bg-pink-500"
+                  : "bg-gray-200 dark:bg-gray-700"
+              }`}
             >
               <Text
-                className={`text-sm ${message.sender === "me"
-                  ? "text-white"
-                  : "text-gray-900 dark:text-white"
-                  }`}
+                className={`text-sm ${
+                  message.sender === "me"
+                    ? "text-white"
+                    : "text-gray-900 dark:text-white"
+                }`}
               >
                 {message.text}
               </Text>
               <Text
-                className={`text-xs mt-1 ${message.sender === "me"
-                  ? "text-pink-100"
-                  : "text-gray-500 dark:text-gray-400"
-                  }`}
+                className={`text-xs mt-1 ${
+                  message.sender === "me"
+                    ? "text-pink-100"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
               >
                 {formatTime(message.timestamp)}
               </Text>
@@ -438,8 +444,8 @@ export default function StreamChatInterface({
       </ScrollView>
 
       {/* Message Input */}
-      <View className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <View className="flex-row items-center space-x-2">
+      <View className="border-t border-gray-200 dark:border-gray-700 px-2 py-4">
+        <View className="flex-row items-center gap-3">
           <TextInput
             value={newMessage}
             onChangeText={(text) => {
@@ -455,7 +461,7 @@ export default function StreamChatInterface({
             }}
             placeholder="Type a message..."
             placeholderTextColor="#9CA3AF"
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full dark:bg-gray-800 dark:text-white"
+            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full dark:bg-gray-800 dark:text-white"
             editable={!!channel}
             multiline={false}
           />
@@ -463,8 +469,9 @@ export default function StreamChatInterface({
           <TouchableOpacity
             onPress={handleSendMessage}
             disabled={!newMessage.trim() || !channel}
-            className={`px-6 py-2 bg-pink-500 rounded-full ${!newMessage.trim() || !channel ? "opacity-50" : ""
-              }`}
+            className={`px-6 py-3 bg-pink-500 rounded-full ${
+              !newMessage.trim() || !channel ? "opacity-50" : ""
+            }`}
             activeOpacity={0.7}
           >
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
