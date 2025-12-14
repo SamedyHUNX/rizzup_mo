@@ -26,27 +26,33 @@ export default function MessagesScreen() {
 
   const loadChatsWithMessages = async () => {
     try {
+      setLoading(true);
       setError("");
 
       // Get current user
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
-      if (!currentUser) return;
+
+      if (!currentUser) {
+        setError("User not authenticated");
+        return;
+      }
 
       // Get user matches
       const { data: userMatches } = await getUserMatches();
-      if (!userMatches) {
+      if (!userMatches || userMatches.length === 0) {
         setChats([]);
         return;
       }
 
       // Load chats with messages from Stream
+      // This will auto-initialize the Stream client if needed
       const chatData = await loadChatsForMatches(userMatches, currentUser.id);
       setChats(chatData);
     } catch (error: any) {
-      setError(error.message);
-      console.error(error);
+      console.error("Error loading chats:", error);
+      setError(error.message || "Failed to load messages");
     } finally {
       setLoading(false);
     }
@@ -64,17 +70,52 @@ export default function MessagesScreen() {
 
   // Subscribe to real-time message updates
   useEffect(() => {
-    const cleanup = setupMessageListener(() => {
-      loadChatsWithMessages();
-    });
+    // Small delay to ensure chat client is initialized
+    const timeoutId = setTimeout(() => {
+      const cleanup = setupMessageListener(() => {
+        loadChatsWithMessages();
+      });
+
+      // Store cleanup in ref or state if needed
+      return () => {
+        if (cleanup) cleanup();
+      };
+    }, 1000);
 
     return () => {
-      if (cleanup) cleanup();
+      clearTimeout(timeoutId);
     };
   }, []);
 
   if (loading) {
     return <Loading message="Loading your messages..." />;
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 bg-gradient-to-br from-pink-50 to-red-50 dark:from-gray-900 dark:to-gray-800">
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 bg-red-100 dark:bg-red-900 rounded-full items-center justify-center mb-6">
+            <Text className="text-4xl">⚠️</Text>
+          </View>
+          <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+            Something went wrong
+          </Text>
+          <Text className="text-gray-600 dark:text-gray-400 mb-6 text-center">
+            {error}
+          </Text>
+          <TouchableOpacity
+            className="bg-pink-500 py-3 px-6 rounded-full"
+            activeOpacity={0.8}
+            onPress={loadChatsWithMessages}
+          >
+            <Text className="text-white font-semibold text-center">
+              Try Again
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const renderEmptyState = () => (

@@ -173,8 +173,20 @@ export async function loadChatsForMatches(
   currentUserId: string
 ): Promise<ChatData[]> {
   try {
+    // Initialize chat client if not already initialized
     if (!chatClient) {
-      throw new Error("Chat client not initialized");
+      const tokenData = await getStreamUserToken();
+      if (!tokenData.token || !tokenData.userId) {
+        console.warn("Could not get Stream token");
+        return [];
+      }
+
+      await initStreamChat(
+        tokenData.userId,
+        tokenData.token,
+        tokenData.userName,
+        tokenData.userImage
+      );
     }
 
     // Get all channels where the current user is a member
@@ -185,7 +197,7 @@ export async function loadChatsForMatches(
 
     const sort = [{ last_message_at: -1 }] as const;
 
-    const channels = await chatClient.queryChannels(filter, sort, {
+    const channels = await chatClient!.queryChannels(filter, sort, {
       watch: true,
       state: true,
     });
@@ -219,7 +231,7 @@ export async function loadChatsForMatches(
       chatData.push({
         id: channel.id!,
         user: matchedUser,
-        lastMessage: lastMessage?.text || "Start your conversation",
+        lastMessage: lastMessage?.text || "No messages yet",
         lastMessageTime: lastMessage?.created_at
           ? new Date(lastMessage.created_at).toISOString()
           : new Date().toISOString(),
@@ -240,8 +252,9 @@ export function setupMessageListener(
 ): (() => void) | null {
   try {
     if (!chatClient) {
-      console.warn("Chat client not initialized");
-      return null;
+      console.warn("Chat client not initialized for message listener");
+      // Return empty cleanup function instead of null
+      return () => {};
     }
 
     // Listen for new messages
