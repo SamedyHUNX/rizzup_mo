@@ -6,6 +6,11 @@ import {
   useEffect,
   useState,
 } from "react";
+import {
+  disconnectStreamChat,
+  getStreamUserToken,
+  initStreamChat,
+} from "../get-stream-io/stream";
 import { useAsyncHandler } from "../hooks/use-async-handler";
 import { supabase } from "../supabase/supabase";
 
@@ -32,6 +37,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useAsyncHandler();
 
   const isLoggedIn = !!user;
+
+  // Initialize when user logs in
+  useEffect(() => {
+    async function setupChat() {
+      const tokenData = await getStreamUserToken();
+      if (tokenData.token && tokenData.userId) {
+        await initStreamChat(
+          tokenData.userId,
+          tokenData.token,
+          tokenData.userName,
+          tokenData.userImage
+        );
+      }
+    }
+
+    setupChat();
+
+    return () => {
+      disconnectStreamChat();
+    };
+  }, []);
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;

@@ -1,7 +1,12 @@
 import Loading from "@/components/loading";
+import {
+  loadChatsForMatches,
+  setupMessageListener,
+} from "@/lib/get-stream-io/stream";
 import { formatTime } from "@/lib/helpers/format-time";
 import { getUserMatches } from "@/lib/supabase/functions/matches";
-import { UserProfile } from "@/types/users.type";
+import { supabase } from "@/lib/supabase/supabase";
+import { ChatData } from "@/types/chat.type";
 import { Link } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -14,45 +19,41 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export interface ChatData {
-  id: string;
-  user: UserProfile;
-  lastMessage?: string;
-  lastMessageTime: string;
-  unreadCount: number;
-}
-
 export default function MessagesScreen() {
   const [chats, setChats] = useState<ChatData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    async function loadMatches() {
-      try {
-        setError("");
-        const { data: userMatches } = await getUserMatches();
-        if (!userMatches) {
-          setChats([]);
-          return;
-        }
-        const chatData: ChatData[] = userMatches.map((match) => ({
-          id: match.id,
-          user: match,
-          lastMessage: "Start your conversation!",
-          lastMessageTime: match.created_at,
-          unreadCount: 0,
-        }));
-        setChats(chatData);
-      } catch (error: any) {
-        setError(error.message);
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const loadChatsWithMessages = async () => {
+    try {
+      setError("");
 
-    loadMatches();
+      // Get current user
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      if (!currentUser) return;
+
+      // Get user matches
+      const { data: userMatches } = await getUserMatches();
+      if (!userMatches) {
+        setChats([]);
+        return;
+      }
+
+      // Load chats with messages from Stream
+      const chatData = await loadChatsForMatches(userMatches, currentUser.id);
+      setChats(chatData);
+    } catch (error: any) {
+      setError(error.message);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadChatsWithMessages();
   }, []);
 
   useEffect(() => {
@@ -60,6 +61,17 @@ export default function MessagesScreen() {
       Alert.alert("Error", error);
     }
   }, [error]);
+
+  // Subscribe to real-time message updates
+  useEffect(() => {
+    const cleanup = setupMessageListener(() => {
+      loadChatsWithMessages();
+    });
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
 
   if (loading) {
     return <Loading message="Loading your messages..." />;
@@ -95,8 +107,8 @@ export default function MessagesScreen() {
         pathname: "/chat",
         params: {
           userId: chat.user.id,
-          userData: JSON.stringify(chat.user)
-        }
+          userData: JSON.stringify(chat.user),
+        },
       }}
       asChild
     >
