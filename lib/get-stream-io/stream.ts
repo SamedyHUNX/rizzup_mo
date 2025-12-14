@@ -219,7 +219,7 @@ export async function loadChatsForMatches(
       chatData.push({
         id: channel.id!,
         user: matchedUser,
-        lastMessage: lastMessage?.text || "No messages yet",
+        lastMessage: lastMessage?.text || "Start your conversation",
         lastMessageTime: lastMessage?.created_at
           ? new Date(lastMessage.created_at).toISOString()
           : new Date().toISOString(),
